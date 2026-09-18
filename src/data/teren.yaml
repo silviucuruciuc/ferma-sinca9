@@ -5,14 +5,14 @@
 # pe parcele separate ies 1199.510 și 1000.112 mp, perimetre 151.718 și 145.596 m — identice
 # cu actele. Documentele: `cadastru/` (ignorat de git; repo-ul e public).
 #
-# Cele două parcele sunt desenate ca un singur contur — hotarul dintre ele (latura 200-201,
-# 53.733 m) nu se mai afișează. Punctele 200 și 201 rămân în contur, ca vârfuri de margine.
+# Cele două parcele sunt un singur contur — hotarul dintre ele (latura 200-201) nu se afișează.
 #
 # X = Nord, Y = Est, metri. Plan local: x = Y - origine.y (Est), y = X - origine.x (Nord).
 # Originea e colțul de sud-vest al gabaritului (X minim = pct. 202, Y minim = pct. 206).
 # NU schimba originea după ce ai așezat pomii — pozițiile din pozitii.json sunt metri față de ea.
 #
-# Terenul e rotit ~12.6° față de axele N/E.
+# Terenul e rotit ~12.6° față de axele N/E. Construcțiile sunt aliniate
+# la garduri, nu la axele N/E, și calculate din cotele date — nu desenate de mână.
 nume: Ferma Șinca 9
 localitate: Șinca Nouă, jud. Brașov
 sistem: stereo70
@@ -23,7 +23,6 @@ parcele:
   - nume: CF 105881 + 105882
     suprafata_mp: 2200
     # Front total la stradă (vest) 41.41 m · adâncime 52.32–54.31 m.
-    # Gard de lemn pct. 527-532 și 532-534, gard de plasă pct. 528-530.
     # Folosință din acte: 788 mp livadă (417 + 371) + 1412 mp arabil (783 + 629).
     puncte: |
       465842.558 519179.725
@@ -55,10 +54,8 @@ zone:
       465851.330 519119.142
       465839.147 519114.709
       465832.831 519112.835
-  # Livada veche: bandă de la stradă, pe toată lățimea terenului, până acoperă cei
-  # 788 mp de livadă din acte (417 în 105881 + 371 în 105882). Adâncimea rezultată
-  # e 21.60 m. Calculată prin tăierea conturului cu o dreaptă
-  # paralelă cu strada, nu desenată de mână.
+  # Bandă de la stradă, pe toată lățimea, până acoperă cei 788 mp de livadă din acte.
+  # Adâncime rezultată: 21.60 m din cei 59.60 m ai terenului.
   - nume: Livadă
     tip: livada
     puncte: |
@@ -71,6 +68,25 @@ zone:
       465869.321 519133.138
       465871.738 519133.964
       465868.195 519149.892
+  # Rulotă 3 x 1.5 m, la marginea de nord. Latura lungă (3 m) e spre stradă, deci ocupă
+  # 1.5 m în adâncime. La 2 m de gardul nordic (209-210) și la 1 m după capătul livezii
+  # (livada se termină la 21.60 m, rulota începe la 22.61 m).
+  - nume: Knaus
+    tip: constructie
+    puncte: |
+      465866.025 519150.434
+      465865.700 519151.898
+      465862.771 519151.247
+      465863.097 519149.783
+  # Magazie 3.3 x 2.7 m, în colțul de sud (pct. 202). Latura lungă (3.3 m) e paralelă cu
+  # gardul estic (202-201), la 0.5 m de el; la 2 m de gardul sudic (203-202).
+  - nume: Magazie
+    tip: constructie
+    puncte: |
+      465823.348 519171.165
+      465826.394 519172.436
+      465827.434 519169.944
+      465824.388 519168.673
 repere:
   # Reperele sunt MEREU în metri locali (teren.js nu le convertește).
   - nume: Poartă (pct. 200)
