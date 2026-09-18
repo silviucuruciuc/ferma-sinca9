@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="ro">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Admin · Ferma Șinca 90</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="cms-config-url" href="/admin/config.yml" type="application/yaml" />
+  </head>
+  <body>
+    <script>
+      window.CMS_MANUAL_INIT = true;
+    </script>
+    <!-- Sveltia CMS e copiat din node_modules la build (scripts/copiaza-cms.mjs): fără CDN pe pagina care vede tokenul GitHub. -->
+    <script src="/admin/sveltia-cms.js"></script>
+    <script>
+      // Autentificarea GitHub trece prin Worker-ul acestui site (/oauth/*), pe domeniul curent.
+      // Local (npm run dev) folosește „Work with Local Repository”.
+      var local = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+      CMS.init(local ? {} : { config: { backend: { base_url: location.origin + '/oauth' } } });
+    </script>
+  </body>
+</html>

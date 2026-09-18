@@ -1,0 +1,522 @@
+@import '@fontsource-variable/archivo/wdth.css';
+
+/* Hârtie de plan topografic, cerneală de molid, galben de etichetă de pepinieră.
+   Culorile saturate sunt rezervate speciilor de pe plan. */
+:root {
+  --hartie: #eef1ec;
+  --hartie-2: #e2e8e1;
+  --alb: #fbfcfa;
+  --cerneala: #1c2a26;
+  --grafit: #55625d;
+  --linie: #c3ccc5;
+  --linie-2: #d6ddd7;
+  --molid: #2c5a4d;
+  --molid-2: #234a3f;
+  --eticheta: #f2c230;
+  --eticheta-2: #f7d86a;
+  --alerta: #b3261e;
+  --atentie: #a86a00;
+  --bine: #2f6b3a;
+
+  --font: 'Archivo Variable', 'Archivo', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --ingust: 68%;
+  --r: 4px;
+  --umbra: 0 1px 0 rgb(28 42 38 / 0.06), 0 6px 18px -8px rgb(28 42 38 / 0.25);
+  --bara: 3.25rem;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: var(--font);
+  font-size: 100%;
+  color: var(--cerneala);
+  background: var(--hartie);
+  -webkit-text-size-adjust: 100%;
+  font-variant-numeric: tabular-nums;
+}
+
+body {
+  margin: 0;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-stretch: 72%;
+  font-weight: 760;
+  line-height: 1.08;
+  letter-spacing: -0.005em;
+  margin: 0 0 0.5em;
+  text-wrap: balance;
+}
+
+h1 { font-size: clamp(2rem, 1.4rem + 3vw, 3.25rem); }
+h2 { font-size: clamp(1.45rem, 1.2rem + 1vw, 1.9rem); margin-top: 1.6em; }
+h3 { font-size: 1.2rem; margin-top: 1.2em; }
+
+p,
+ul,
+ol,
+dl {
+  margin: 0 0 1em;
+}
+
+a {
+  color: var(--molid);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+a:hover {
+  color: var(--molid-2);
+  text-decoration-thickness: 2px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--cerneala);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 5px var(--eticheta);
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+.ascuns-vizual {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+/* ---------- Bara de sus ---------- */
+.bara {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  height: var(--bara);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0 clamp(0.75rem, 2vw, 1.5rem);
+  background: var(--cerneala);
+  color: var(--hartie);
+}
+
+.marca {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  color: inherit;
+  text-decoration: none;
+  font-stretch: 62%;
+  font-weight: 820;
+  font-size: 1.3rem;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.marca:hover {
+  color: var(--eticheta);
+}
+
+.marca svg {
+  flex: none;
+}
+
+.nav {
+  display: flex;
+  gap: 0.15rem;
+  margin-left: auto;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.nav a {
+  color: var(--hartie);
+  text-decoration: none;
+  font-stretch: 80%;
+  font-weight: 560;
+  padding: 0.45rem 0.6rem;
+  border-radius: var(--r);
+  white-space: nowrap;
+}
+
+.nav a:hover {
+  background: rgb(255 255 255 / 0.08);
+}
+
+.nav .scurt {
+  display: none;
+}
+
+@media (max-width: 30rem) {
+  .bara {
+    gap: 0.5rem;
+  }
+  .marca {
+    font-size: 1.1rem;
+  }
+  .nav a {
+    padding: 0.45rem 0.45rem;
+  }
+  .nav .lung {
+    display: none;
+  }
+  .nav .scurt {
+    display: inline;
+  }
+}
+
+.nav a[aria-current='page'] {
+  color: var(--cerneala);
+  background: var(--eticheta);
+}
+
+/* ---------- Pagini de citit ---------- */
+.pagina {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: clamp(1.25rem, 3vw, 2.5rem) clamp(1rem, 3vw, 2rem) 4rem;
+}
+
+.proza {
+  max-width: 66ch;
+}
+
+.subtitlu {
+  color: var(--grafit);
+  font-size: 1.05rem;
+  max-width: 60ch;
+}
+
+.gol {
+  border: 1.5px dashed var(--linie);
+  border-radius: var(--r);
+  padding: 1.25rem;
+  color: var(--grafit);
+  background: var(--alb);
+}
+
+/* ---------- Butoane ---------- */
+.buton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.75rem;
+  padding: 0.55rem 1rem;
+  border: 1.5px solid var(--cerneala);
+  border-radius: var(--r);
+  background: var(--alb);
+  color: var(--cerneala);
+  font: inherit;
+  font-stretch: 85%;
+  font-weight: 620;
+  text-decoration: none;
+  cursor: pointer;
+  line-height: 1.15;
+}
+
+.buton:hover {
+  background: var(--hartie-2);
+  color: var(--cerneala);
+}
+
+.buton.plin {
+  background: var(--cerneala);
+  color: var(--hartie);
+}
+
+.buton.plin:hover {
+  background: var(--molid-2);
+}
+
+.buton.galben {
+  background: var(--eticheta);
+  border-color: var(--cerneala);
+}
+
+.buton.galben:hover {
+  background: var(--eticheta-2);
+}
+
+.buton[disabled] {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.butoane {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0 1.5rem;
+}
+
+/* ---------- Eticheta de pepinieră (elementul de identitate) ---------- */
+.tag {
+  --c: var(--grafit);
+  position: relative;
+  display: grid;
+  gap: 0.1rem;
+  padding: 0.7rem 1rem 0.75rem 2.4rem;
+  background: var(--eticheta);
+  color: var(--cerneala);
+  clip-path: polygon(1.1rem 0, 100% 0, 100% 100%, 1.1rem 100%, 0 calc(100% - 1.1rem), 0 1.1rem);
+  box-shadow: inset 0.45rem 0 0 var(--c);
+}
+
+.tag::before {
+  content: '';
+  position: absolute;
+  left: 1.05rem;
+  top: 50%;
+  width: 0.62rem;
+  height: 0.62rem;
+  margin-top: -0.31rem;
+  border-radius: 50%;
+  background: var(--hartie);
+  box-shadow: inset 0 0 0 1.5px rgb(28 42 38 / 0.55);
+}
+
+.tag-id {
+  font-stretch: 62%;
+  font-weight: 830;
+  font-size: 1.5rem;
+  line-height: 1;
+  letter-spacing: 0.005em;
+}
+
+.tag-soi {
+  font-stretch: 85%;
+  font-weight: 560;
+}
+
+.tag-soi .pt {
+  font-weight: 420;
+  color: rgb(28 42 38 / 0.72);
+}
+
+.tag.mare {
+  padding: 1.1rem 1.4rem 1.2rem 3.4rem;
+  clip-path: polygon(1.6rem 0, 100% 0, 100% 100%, 1.6rem 100%, 0 calc(100% - 1.6rem), 0 1.6rem);
+  box-shadow: inset 0.7rem 0 0 var(--c);
+}
+
+.tag.mare::before {
+  left: 1.5rem;
+  width: 0.9rem;
+  height: 0.9rem;
+  margin-top: -0.45rem;
+}
+
+.tag.mare .tag-id {
+  font-size: clamp(2.6rem, 1.8rem + 4vw, 4.4rem);
+}
+
+.tag.mare .tag-soi {
+  font-size: clamp(1.15rem, 1rem + 0.8vw, 1.5rem);
+}
+
+/* ---------- Insigne ---------- */
+.insigna {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-stretch: 80%;
+  font-weight: 600;
+  font-size: 0.85rem;
+  line-height: 1;
+  padding: 0.3rem 0.5rem;
+  border-radius: 999px;
+  border: 1.5px solid currentColor;
+  white-space: nowrap;
+}
+
+.insigna[data-stare='comandat'] { color: var(--grafit); border-style: dashed; }
+.insigna[data-stare='plantat'] { color: var(--bine); }
+.insigna[data-stare='observatie'] { color: var(--atentie); }
+.insigna[data-stare='problema'] { color: var(--alerta); }
+.insigna[data-stare='uscat'],
+.insigna[data-stare='inlocuit'],
+.insigna[data-stare='scos'] { color: var(--grafit); text-decoration: line-through; }
+
+.punct-specie {
+  display: inline-block;
+  width: 0.75em;
+  height: 0.75em;
+  border-radius: 50%;
+  background: var(--c);
+  flex: none;
+}
+
+.punct-specie[data-forma='patrat'] { border-radius: 2px; }
+.punct-specie[data-forma='romb'] { border-radius: 1px; transform: rotate(45deg) scale(0.85); }
+
+/* ---------- Fișe (liste de definiții) ---------- */
+.fisa {
+  display: grid;
+  grid-template-columns: minmax(8rem, max-content) 1fr;
+  gap: 0.45rem 1.25rem;
+  margin: 0 0 1.25rem;
+}
+
+.fisa dt {
+  color: var(--grafit);
+  font-stretch: 85%;
+}
+
+.fisa dd {
+  margin: 0;
+  font-weight: 520;
+}
+
+@media (max-width: 30rem) {
+  .fisa {
+    grid-template-columns: 1fr;
+    gap: 0.1rem;
+  }
+  .fisa dd {
+    margin-bottom: 0.55rem;
+  }
+}
+
+/* ---------- Tabele ---------- */
+.tabel-cutie {
+  overflow-x: auto;
+  border: 1px solid var(--linie);
+  border-radius: var(--r);
+  background: var(--alb);
+}
+
+table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 0.95rem;
+}
+
+th,
+td {
+  text-align: left;
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid var(--linie-2);
+  vertical-align: top;
+}
+
+th {
+  font-stretch: 80%;
+  font-weight: 650;
+  color: var(--grafit);
+  background: var(--hartie);
+  position: sticky;
+  top: 0;
+}
+
+tbody tr:hover {
+  background: var(--hartie);
+}
+
+td.num,
+th.num {
+  text-align: right;
+}
+
+/* ---------- Jurnal ---------- */
+.intrare {
+  display: grid;
+  grid-template-columns: 6.5rem 1fr;
+  gap: 0.25rem 1rem;
+  padding: 0.9rem 0;
+  border-top: 1px solid var(--linie);
+}
+
+.intrare-data {
+  font-stretch: 80%;
+  color: var(--grafit);
+  font-weight: 560;
+}
+
+.intrare h3,
+.intrare h4 {
+  margin: 0 0 0.3rem;
+  font-size: 1.1rem;
+}
+
+.intrare-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.5rem;
+  align-items: center;
+  margin-bottom: 0.4rem;
+  font-size: 0.9rem;
+  color: var(--grafit);
+}
+
+.intrare-corp > :last-child {
+  margin-bottom: 0;
+}
+
+.poze {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+}
+
+.poze img {
+  width: 8.5rem;
+  height: 8.5rem;
+  object-fit: cover;
+  border-radius: var(--r);
+  border: 1px solid var(--linie);
+}
+
+@media (max-width: 34rem) {
+  .intrare {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.12rem 0.45rem;
+  border-radius: var(--r);
+  background: var(--hartie-2);
+  color: var(--cerneala);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-stretch: 85%;
+  font-weight: 560;
+}
+
+a.cip:hover {
+  background: var(--eticheta-2);
+  color: var(--cerneala);
+}
+
+.tip {
+  font-stretch: 80%;
+  font-weight: 650;
+  color: var(--cerneala);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

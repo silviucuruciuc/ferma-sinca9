@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.astro/
+.wrangler/
+.dev.vars
+.env
+public/admin/sveltia-cms.js
+*.log
+.DS_Store
+public/admin/chunks/

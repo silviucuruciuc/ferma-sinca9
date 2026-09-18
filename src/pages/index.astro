@@ -1,0 +1,651 @@
+---
+import Baza from '../layouts/Baza.astro';
+import PlanSvg from '../components/PlanSvg.astro';
+import { incarca, GITHUB, repoConfigurat, linkCMS, dataScurta } from '../lib/date.js';
+import { SPECII, GRUPE } from '../lib/specii.js';
+
+const { pomi, teren } = await incarca();
+
+const activi = pomi.filter((p) => !p.stareInfo.istoric);
+const pePlan = activi.filter((p) => p.pozitie).length;
+const plantati = activi.filter((p) => p.stare !== 'comandat').length;
+
+// Legenda: doar speciile prezente, grupate.
+const grupe = Object.entries(GRUPE)
+  .map(([cod, g]) => ({
+    cod,
+    nume: g.nume,
+    forma: g.forma,
+    specii: Object.entries(SPECII)
+      .filter(([, s]) => s.grupa === cod)
+      .map(([sc, s]) => ({ cod: sc, nume: s.nume, culoare: s.culoare, n: activi.filter((p) => p.specie === sc).length }))
+      .filter((s) => s.n > 0),
+  }))
+  .filter((g) => g.specii.length);
+
+const dateClient = {
+  github: repoConfigurat ? GITHUB : null,
+  cmsPozitii: linkCMS.pozitii(),
+  limite: teren.limite,
+  pomi: pomi.map((p) => ({
+    id: p.id,
+    eticheta: p.eticheta,
+    specie: p.specie,
+    specieNume: p.specieInfo.nume,
+    grupa: p.grupa,
+    forma: p.forma,
+    culoare: p.specieInfo.culoare,
+    soi: p.soiNume,
+    portaltoi: p.portaltoiNume,
+    stare: p.stare,
+    stareNume: p.stareInfo.nume,
+    istoric: !!p.stareInfo.istoric,
+    coroana: p.coroana,
+    x: p.pozitie?.x ?? null,
+    y: p.pozitie?.y ?? null,
+    url: p.url,
+    plantat: dataScurta(p.dataPlantare),
+    comanda: p.comanda,
+    ultimele: p.jurnal
+      .slice(-3)
+      .reverse()
+      .map((j) => ({ data: dataScurta(j.data), titlu: j.titlu, tip: j.tipInfo.nume })),
+    cms: linkCMS.pom(p.id),
+    jurnalNou: linkCMS.jurnalNou({ pomi: p.id }),
+  })),
+};
+const json = JSON.stringify(dateClient).replace(/</g, '\\u003c');
+---
+
+<Baza titlu="Plan" sectiune="plan" plin>
+  <main class="harta">
+    <div class="harta-plan" id="harta-plan">
+      <PlanSvg id="plan" teren={teren} pomi={pomi} eticheta="Planul terenului. Nordul e sus, strada e pe latura de vest." />
+
+      <div class="plan-nord" aria-hidden="true">
+        <svg viewBox="0 0 24 34" width="22" height="31"><path d="M12 2 20 26 12 21 4 26Z" fill="#1c2a26" /><text x="12" y="34" text-anchor="middle">N</text></svg>
+      </div>
+      <div class="plan-controale">
+        <button type="button" class="ctrl" data-zoom="in" aria-label="Mărește">+</button>
+        <button type="button" class="ctrl" data-zoom="out" aria-label="Micșorează">−</button>
+        <button type="button" class="ctrl ctrl-text" data-zoom="fit" aria-label="Tot terenul">Tot</button>
+      </div>
+      <div class="plan-scara" aria-hidden="true"><span class="scara-bara"></span><span class="scara-text">5 m</span></div>
+
+      <div class="plan-mod" id="plan-mod" hidden>
+        <p class="mod-text" id="mod-text">Trage pomii pe plan. Din listă: alege un pom, apoi atinge locul unde e plantat.</p>
+        <p class="mod-info" id="mod-info" aria-live="polite"></p>
+        <div class="mod-butoane">
+          <label class="comutator"><input type="checkbox" id="aliniere" checked /> Aliniere la 0,5 m</label>
+          <button type="button" class="buton galben" id="btn-salveaza" disabled>Salvează</button>
+          <button type="button" class="buton" id="btn-descarca">Descarcă JSON</button>
+          <button type="button" class="buton" id="btn-renunta">Închide</button>
+        </div>
+      </div>
+
+      {
+        pePlan === 0 && (
+          <p class="plan-gol" id="plan-gol">
+            Niciun pom nu e încă pe plan. Apasă <strong>Aranjează pe plan</strong> și așază-i din lista „Nepoziționați”.
+          </p>
+        )
+      }
+    </div>
+
+    <aside class="panou" aria-label="Detalii și filtre">
+      <div class="panou-cap">
+        <p class="statistica">
+          <strong>{activi.length}</strong> plante · <strong>{plantati}</strong> plantate · <strong id="nr-pe-plan">{pePlan}</strong> pe plan
+        </p>
+        <label class="cautare">
+          <span class="ascuns-vizual">Caută</span>
+          <input type="search" id="cautare" placeholder="Caută: Fuji, par-07, M26…" autocomplete="off" />
+        </label>
+      </div>
+
+      <section class="selectie" id="selectie" hidden aria-live="polite">
+        <button type="button" class="inchide" id="inchide-selectie" aria-label="Închide">×</button>
+        <div class="tag" id="sel-tag">
+          <div class="tag-id" id="sel-id"></div>
+          <div class="tag-soi" id="sel-soi"></div>
+        </div>
+        <p class="sel-stare" id="sel-stare"></p>
+        <ul class="sel-jurnal" id="sel-jurnal"></ul>
+        <div class="sel-butoane">
+          <a class="buton plin" id="sel-fisa" href="#">Fișa pomului</a>
+          <a class="buton" id="sel-jurnal-nou" href="#">Adaugă în jurnal</a>
+          <button type="button" class="buton" id="sel-scoate" hidden>Scoate de pe plan</button>
+        </div>
+      </section>
+
+      <details class="bloc" open>
+        <summary>Legendă și filtre</summary>
+        <div class="legenda">
+          {
+            grupe.map((g) => (
+              <div class="legenda-grupa">
+                <p class="legenda-titlu">{g.nume}</p>
+                <div class="legenda-specii">
+                  {g.specii.map((s) => (
+                    <button type="button" class="filtru" data-specie={s.cod} aria-pressed="true" style={`--c:${s.culoare}`}>
+                      <span class="punct-specie" data-forma={g.forma} />
+                      {s.nume}
+                      <span class="n">{s.n}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))
+          }
+        </div>
+        <div class="comutatoare">
+          <label class="comutator"><input type="checkbox" id="arata-coroane" checked /> Coroana la maturitate (cerc punctat)</label>
+          <label class="comutator"><input type="checkbox" id="arata-istoric" /> Arată pomii uscați / scoși</label>
+        </div>
+        <p class="nota-legenda">
+          <span class="mostra plin"></span> plantat <span class="mostra gol"></span> comandat (poziție planificată)
+        </p>
+      </details>
+
+      <details class="bloc" id="bloc-tava" open>
+        <summary>Nepoziționați <span class="n" id="nr-tava"></span></summary>
+        <p class="nota-tava" id="nota-tava">Pomi care nu au încă loc pe plan.</p>
+        <ul class="tava" id="tava"></ul>
+      </details>
+
+      <div class="bloc bloc-aranjare">
+        <button type="button" class="buton" id="btn-aranjeaza">Aranjează pe plan</button>
+        <p class="nota-tava">
+          Mutările se salvează direct în repo (<code>src/data/pozitii.json</code>) și site-ul se reface singur.
+        </p>
+      </div>
+    </aside>
+  </main>
+
+  <dialog id="dialog-token" class="dialog">
+    <form method="dialog">
+      <h2>Conectare la GitHub</h2>
+      <p>
+        Ca să salvez pozițiile am nevoie de acces la repo. Cel mai simplu: intră o dată în
+        <a href="/admin/" target="_blank" rel="noopener">Admin</a> și autentifică-te; apoi revino aici.
+      </p>
+      <p>
+        Sau lipește un token „fine-grained” creat pe contul tău <strong>personal</strong>, cu acces doar la
+        repo-ul <code>{GITHUB.owner}/{GITHUB.repo}</code> și permisiunea <em>Contents: Read and write</em>.
+      </p>
+      <label class="camp">Token GitHub <input type="password" id="token-input" autocomplete="off" /></label>
+      <div class="butoane">
+        <button class="buton plin" value="ok">Continuă</button>
+        <button class="buton" value="anulare">Anulează</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script type="application/json" id="date-plan" set:html={json} />
+  <script>
+    import '../scripts/plan.js';
+  </script>
+</Baza>
+
+<style>
+  .harta {
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: min(64vh, 38rem) auto;
+  }
+
+  @media (min-width: 58rem) {
+    .harta {
+      grid-template-columns: 1fr 23rem;
+      grid-template-rows: calc(100dvh - var(--bara));
+    }
+  }
+
+  .harta-plan {
+    position: relative;
+    overflow: hidden;
+    border-bottom: 1px solid var(--linie);
+    touch-action: none;
+  }
+
+  .plan-nord {
+    position: absolute;
+    top: 0.75rem;
+    left: 0.75rem;
+    pointer-events: none;
+  }
+
+  .plan-nord text {
+    font: 700 9px var(--font);
+  }
+
+  .plan-controale {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .ctrl {
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1.5px solid var(--cerneala);
+    border-radius: var(--r);
+    background: var(--alb);
+    color: var(--cerneala);
+    font: 600 1.35rem/1 var(--font);
+    cursor: pointer;
+    box-shadow: var(--umbra);
+  }
+
+  .ctrl-text {
+    font-size: 0.85rem;
+    font-stretch: 75%;
+  }
+
+  .ctrl:hover {
+    background: var(--eticheta);
+  }
+
+  .plan-scara {
+    position: absolute;
+    left: 0.75rem;
+    bottom: 0.75rem;
+    display: flex;
+    align-items: flex-end;
+    gap: 0.4rem;
+    font-stretch: 80%;
+    font-size: 0.8rem;
+    font-weight: 600;
+    pointer-events: none;
+  }
+
+  .scara-bara {
+    display: block;
+    width: 60px;
+    height: 7px;
+    border: 1.5px solid var(--cerneala);
+    border-top: 0;
+  }
+
+  .plan-gol {
+    position: absolute;
+    left: 50%;
+    bottom: 3rem;
+    transform: translateX(-50%);
+    width: min(28rem, calc(100% - 2rem));
+    margin: 0;
+    padding: 0.75rem 1rem;
+    background: var(--alb);
+    border: 1.5px dashed var(--grafit);
+    border-radius: var(--r);
+    text-align: center;
+    pointer-events: none;
+  }
+
+  .plan-mod {
+    position: absolute;
+    left: 0.75rem;
+    right: 4.25rem;
+    top: 0.75rem;
+    padding: 0.65rem 0.8rem;
+    background: var(--cerneala);
+    color: var(--hartie);
+    border-radius: var(--r);
+    box-shadow: var(--umbra);
+  }
+
+  .plan-mod p {
+    margin: 0 0 0.4rem;
+    font-size: 0.92rem;
+  }
+
+  .mod-info {
+    color: var(--eticheta);
+    font-weight: 600;
+    min-height: 1.4em;
+  }
+
+  .mod-info.avertizare {
+    color: #ffb4a8;
+  }
+
+  .mod-butoane {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    align-items: center;
+  }
+
+  .mod-butoane .buton {
+    min-height: 2.4rem;
+    padding: 0.35rem 0.75rem;
+  }
+
+  .plan-mod .comutator {
+    color: var(--hartie);
+    margin-right: auto;
+  }
+
+  :global(.harta-plan.mod-aranjare) {
+    cursor: grab;
+  }
+
+  :global(.harta-plan.alege-loc) {
+    cursor: crosshair;
+  }
+
+  /* ---------- Panou ---------- */
+  .panou {
+    overflow-y: auto;
+    background: var(--hartie);
+    border-left: 1px solid var(--linie);
+    padding-bottom: 6rem;
+  }
+
+  .panou-cap {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: 0.85rem 1rem 0.75rem;
+    background: var(--hartie);
+    border-bottom: 1px solid var(--linie);
+  }
+
+  .statistica {
+    margin: 0 0 0.55rem;
+    font-stretch: 85%;
+    color: var(--grafit);
+  }
+
+  .statistica strong {
+    color: var(--cerneala);
+  }
+
+  .cautare input {
+    width: 100%;
+    min-height: 2.75rem;
+    padding: 0.5rem 0.75rem;
+    border: 1.5px solid var(--cerneala);
+    border-radius: var(--r);
+    background: var(--alb);
+    font: inherit;
+  }
+
+  .selectie {
+    position: relative;
+    margin: 0.9rem 1rem 0;
+    padding: 0.9rem;
+    background: var(--alb);
+    border: 1px solid var(--linie);
+    border-radius: var(--r);
+    box-shadow: var(--umbra);
+  }
+
+  @media (max-width: 57.99rem) {
+    .selectie {
+      position: fixed;
+      left: 0.5rem;
+      right: 0.5rem;
+      bottom: 0.5rem;
+      z-index: 30;
+      margin: 0;
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+  }
+
+  .inchide {
+    position: absolute;
+    top: 0.35rem;
+    right: 0.35rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: 0;
+    background: transparent;
+    font-size: 1.6rem;
+    line-height: 1;
+    cursor: pointer;
+    color: var(--grafit);
+    z-index: 1;
+  }
+
+  .sel-stare {
+    margin: 0.7rem 0 0.4rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.6rem;
+    align-items: center;
+    font-size: 0.92rem;
+    color: var(--grafit);
+  }
+
+  .sel-jurnal {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 0.6rem;
+    font-size: 0.9rem;
+  }
+
+  .sel-jurnal li {
+    padding: 0.3rem 0;
+    border-top: 1px solid var(--linie-2);
+  }
+
+  .sel-butoane {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  .bloc {
+    margin: 0.9rem 1rem 0;
+    padding: 0 0 0.6rem;
+    border-bottom: 1px solid var(--linie);
+  }
+
+  .bloc summary {
+    cursor: pointer;
+    font-stretch: 75%;
+    font-weight: 720;
+    font-size: 1.1rem;
+    padding: 0.4rem 0;
+  }
+
+  .bloc .n,
+  .filtru .n {
+    font-weight: 500;
+    color: var(--grafit);
+  }
+
+  .legenda-titlu {
+    margin: 0.5rem 0 0.25rem;
+    font-size: 0.85rem;
+    font-stretch: 85%;
+    color: var(--grafit);
+  }
+
+  .legenda-specii {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+
+  .filtru {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-height: 2.25rem;
+    padding: 0.25rem 0.55rem;
+    border: 1.5px solid var(--linie);
+    border-radius: 999px;
+    background: var(--alb);
+    font: inherit;
+    font-size: 0.9rem;
+    font-stretch: 88%;
+    cursor: pointer;
+    color: var(--cerneala);
+  }
+
+  .filtru[aria-pressed='false'] {
+    background: transparent;
+    color: var(--grafit);
+    text-decoration: line-through;
+    opacity: 0.7;
+  }
+
+  .filtru[aria-pressed='false'] .punct-specie {
+    background: transparent;
+    box-shadow: inset 0 0 0 1.5px var(--c);
+  }
+
+  .comutatoare {
+    display: grid;
+    gap: 0.2rem;
+    margin-top: 0.8rem;
+  }
+
+  .comutator {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.92rem;
+    cursor: pointer;
+    min-height: 2rem;
+  }
+
+  .comutator input {
+    width: 1.1rem;
+    height: 1.1rem;
+    accent-color: var(--molid);
+  }
+
+  .nota-legenda {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.85rem;
+    color: var(--grafit);
+    margin: 0.5rem 0 0;
+  }
+
+  .mostra {
+    display: inline-block;
+    width: 0.8rem;
+    height: 0.8rem;
+    border-radius: 50%;
+    border: 2px solid var(--grafit);
+    margin-left: 0.4rem;
+  }
+
+  .mostra.plin {
+    background: var(--grafit);
+    margin-left: 0;
+  }
+
+  .mostra.gol {
+    border-style: dashed;
+    background: var(--alb);
+  }
+
+  .nota-tava {
+    font-size: 0.85rem;
+    color: var(--grafit);
+    margin: 0.2rem 0 0.5rem;
+  }
+
+  .tava {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.25rem;
+  }
+
+  .bloc-aranjare {
+    border-bottom: 0;
+  }
+
+  .dialog {
+    max-width: 32rem;
+    border: 1.5px solid var(--cerneala);
+    border-radius: var(--r);
+    padding: 1.25rem 1.4rem;
+    background: var(--hartie);
+    color: var(--cerneala);
+  }
+
+  .dialog::backdrop {
+    background: rgb(28 42 38 / 0.5);
+  }
+
+  .dialog h2 {
+    margin-top: 0;
+  }
+
+  .camp {
+    display: grid;
+    gap: 0.3rem;
+    font-weight: 600;
+  }
+
+  .camp input {
+    min-height: 2.75rem;
+    padding: 0.5rem;
+    border: 1.5px solid var(--cerneala);
+    border-radius: var(--r);
+    font: inherit;
+  }
+</style>
+
+<style is:global>
+  .tava-pom {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    min-height: 2.6rem;
+    padding: 0.35rem 0.6rem;
+    border: 1px solid var(--linie);
+    border-radius: var(--r);
+    background: var(--alb);
+    font: inherit;
+    font-size: 0.92rem;
+    text-align: left;
+    cursor: pointer;
+    color: var(--cerneala);
+  }
+
+  .tava-pom:hover {
+    border-color: var(--cerneala);
+  }
+
+  .tava-pom[aria-pressed='true'] {
+    background: var(--eticheta);
+    border-color: var(--cerneala);
+  }
+
+  .tava-pom .id {
+    font-stretch: 70%;
+    font-weight: 760;
+    min-width: 5.2rem;
+  }
+
+  .tava-pom .soi {
+    color: var(--grafit);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .tava-pom.ascuns {
+    display: none;
+  }
+
+  .sel-jurnal .cand {
+    color: var(--grafit);
+    font-stretch: 85%;
+    margin-right: 0.35rem;
+  }
+</style>

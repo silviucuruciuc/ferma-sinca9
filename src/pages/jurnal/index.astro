@@ -1,0 +1,104 @@
+---
+import Baza from '../../layouts/Baza.astro';
+import Intrare from '../../components/Intrare.astro';
+import { incarca, linkCMS, numar } from '../../lib/date.js';
+import { TIPURI } from '../../lib/specii.js';
+
+const { jurnal } = await incarca();
+const ani = [...new Set(jurnal.map((j) => j.an))].sort((a, b) => b - a);
+const tipuriFolosite = Object.entries(TIPURI).filter(([cod]) => jurnal.some((j) => j.tip === cod));
+const luna = new Intl.DateTimeFormat('ro-RO', { month: 'long' });
+---
+
+<Baza titlu="Jurnal" sectiune="jurnal">
+  <main class="pagina">
+    <h1>Jurnalul livezii</h1>
+    <p class="subtitlu">Tot ce s-a întâmplat în livadă, cel mai recent primul: plantări, tăieri, tratamente, probleme, recolte.</p>
+    <div class="butoane">
+      <a class="buton galben" href={linkCMS.jurnalNou()}>Adaugă în jurnal</a>
+    </div>
+
+    {
+      tipuriFolosite.length > 1 && (
+        <div class="filtre-tip" role="group" aria-label="Filtrează după tip">
+          {tipuriFolosite.map(([cod, t]) => (
+            <button type="button" class="filtru-tip" data-tip={cod} aria-pressed="true">{t.nume}</button>
+          ))}
+        </div>
+      )
+    }
+
+    {
+      ani.map((an) => {
+        const intrari = jurnal.filter((j) => j.an === an);
+        const kg = intrari.reduce((s, j) => s + (j.recolta_kg ?? 0), 0);
+        return (
+          <section>
+            <h2>{an}</h2>
+            <p class="mic">
+              {intrari.length} {intrari.length === 1 ? 'înregistrare' : 'înregistrări'}
+              {kg > 0 && ` · recoltă notată: ${numar(kg)} kg`}
+            </p>
+            {[...new Set(intrari.map((j) => j.data.getMonth()))].map((m) => (
+              <>
+                <h3 class="luna">{luna.format(new Date(an, m, 1))}</h3>
+                {intrari.filter((j) => j.data.getMonth() === m).map((j) => <Intrare j={j} />)}
+              </>
+            ))}
+          </section>
+        );
+      })
+    }
+    {!jurnal.length && <p class="gol">Jurnalul e gol. Prima înregistrare se adaugă din Admin sau de pe pagina unui pom.</p>}
+  </main>
+</Baza>
+
+<script>
+  const butoane = [...document.querySelectorAll<HTMLButtonElement>('.filtru-tip')];
+  const aplica = () => {
+    const active = new Set(butoane.filter((b) => b.getAttribute('aria-pressed') === 'true').map((b) => b.dataset.tip));
+    document.querySelectorAll<HTMLElement>('.intrare').forEach((el) => (el.hidden = !active.has(el.dataset.tip)));
+  };
+  butoane.forEach((b) =>
+    b.addEventListener('click', () => {
+      b.setAttribute('aria-pressed', String(b.getAttribute('aria-pressed') !== 'true'));
+      aplica();
+    }),
+  );
+</script>
+
+<style>
+  .filtre-tip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-bottom: 1rem;
+  }
+  .filtru-tip {
+    min-height: 2.25rem;
+    padding: 0.25rem 0.7rem;
+    border: 1.5px solid var(--cerneala);
+    border-radius: 999px;
+    background: var(--alb);
+    font: inherit;
+    font-size: 0.9rem;
+    font-stretch: 88%;
+    cursor: pointer;
+  }
+  .filtru-tip[aria-pressed='false'] {
+    background: transparent;
+    border-color: var(--linie);
+    color: var(--grafit);
+    text-decoration: line-through;
+  }
+  .luna {
+    margin: 1.2rem 0 0.2rem;
+    font-size: 1rem;
+    color: var(--grafit);
+    text-transform: none;
+  }
+  .mic {
+    color: var(--grafit);
+    font-size: 0.9rem;
+  }
+</style>

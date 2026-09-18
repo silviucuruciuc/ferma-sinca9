@@ -1,0 +1,129 @@
+---
+import Baza from '../../layouts/Baza.astro';
+import { incarca, dataScurta, numar, linkCMS } from '../../lib/date.js';
+import { SPECII, GRUPE } from '../../lib/specii.js';
+
+const { pomi } = await incarca();
+
+// „30-50 kg/an” -> 40 (mijlocul intervalului, ca în foaia „Producție estimată” din Excel).
+const mijloc = (t?: string | null) => {
+  const n = String(t ?? '').replace(',', '.').match(/\d+(\.\d+)?/g)?.map(Number) ?? [];
+  return n.length ? (n[0] + (n[1] ?? n[0])) / 2 : 0;
+};
+
+const specii = Object.entries(SPECII)
+  .map(([cod, s]) => {
+    const lista = pomi.filter((p) => p.specie === cod);
+    const activi = lista.filter((p) => !p.stareInfo.istoric);
+    return {
+      cod,
+      ...s,
+      forma: GRUPE[s.grupa]?.forma ?? 'cerc',
+      lista,
+      n: activi.length,
+      plantate: activi.filter((p) => p.stare !== 'comandat').length,
+      pePlan: activi.filter((p) => p.pozitie).length,
+      kg: activi.reduce((sum, p) => sum + mijloc(p.productie), 0),
+    };
+  })
+  .filter((s) => s.lista.length);
+
+const total = specii.reduce((a, s) => ({ n: a.n + s.n, plantate: a.plantate + s.plantate, pePlan: a.pePlan + s.pePlan, kg: a.kg + s.kg }), { n: 0, plantate: 0, pePlan: 0, kg: 0 });
+const ultima = (p: any) => p.jurnal.filter((j: any) => j.pomi.includes(p.id)).at(-1);
+---
+
+<Baza titlu="Pomi" sectiune="pomi">
+  <main class="pagina">
+    <h1>Pomii și arbuștii</h1>
+    <p class="subtitlu">
+      {total.n} plante, dintre care {total.plantate} plantate și {total.pePlan} așezate pe plan. Producția estimată la maturitate
+      (anii 8–10) e de aproximativ {numar(Math.round(total.kg / 10) * 10, 0)} kg pe an.
+    </p>
+    <div class="butoane">
+      <a class="buton" href="/admin/#/collections/pomi/new">Adaugă un pom</a>
+      <a class="buton" href="/etichete/">Etichete QR</a>
+    </div>
+
+    <div class="tabel-cutie">
+      <table>
+        <thead>
+          <tr><th>Specie</th><th class="num">Plante</th><th class="num">Plantate</th><th class="num">Pe plan</th><th class="num">La maturitate</th></tr>
+        </thead>
+        <tbody>
+          {specii.map((s) => (
+            <tr>
+              <td><a href={`#${s.cod}`} class="specie-link" style={`--c:${s.culoare}`}><span class="punct-specie" data-forma={s.forma} />{s.nume}</a></td>
+              <td class="num">{s.n}</td>
+              <td class="num">{s.plantate}</td>
+              <td class="num">{s.pePlan}</td>
+              <td class="num">{s.kg ? `~${numar(s.kg, 0)} kg/an` : '—'}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    {
+      specii.map((s) => (
+        <section id={s.cod}>
+          <h2 class="titlu-specie" style={`--c:${s.culoare}`}>
+            <span class="punct-specie" data-forma={s.forma} />
+            {s.nume} <span class="latin">{s.latin}</span>
+          </h2>
+          <div class="tabel-cutie">
+            <table>
+              <thead>
+                <tr><th>Pom</th><th>Soi</th><th>Portaltoi</th><th>Stare</th><th>Plantat</th><th>Pe plan</th><th>Ultima înregistrare</th></tr>
+              </thead>
+              <tbody>
+                {s.lista.map((p) => {
+                  const u = ultima(p);
+                  return (
+                    <tr>
+                      <td><a class="id-pom" href={p.url}>{p.eticheta}</a></td>
+                      <td>{p.soi ? <a href={p.soi.url}>{p.soiNume}</a> : p.soiNume}</td>
+                      <td>{p.portaltoi ? <a href={p.portaltoi.url}>{p.portaltoiNume}</a> : '—'}</td>
+                      <td><span class="insigna" data-stare={p.stare}>{p.stareInfo.nume}</span></td>
+                      <td>{p.dataPlantare ? dataScurta(p.dataPlantare) : '—'}</td>
+                      <td>{p.pozitie ? <a href={`/#${p.id}`}>da</a> : <span class="lipsa">nu</span>}</td>
+                      <td>{u ? `${dataScurta(u.data)} · ${u.titlu}` : '—'}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ))
+    }
+  </main>
+</Baza>
+
+<style>
+  .specie-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+  .titlu-specie {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    scroll-margin-top: calc(var(--bara) + 1rem);
+  }
+  .latin {
+    font-stretch: 100%;
+    font-weight: 400;
+    font-style: italic;
+    font-size: 1rem;
+    color: var(--grafit);
+  }
+  .id-pom {
+    font-stretch: 72%;
+    font-weight: 750;
+    white-space: nowrap;
+  }
+  .lipsa {
+    color: var(--grafit);
+  }
+</style>

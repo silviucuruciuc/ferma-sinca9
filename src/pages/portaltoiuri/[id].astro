@@ -1,0 +1,24 @@
+---
+import Baza from '../../layouts/Baza.astro';
+import FisaPortaltoi from '../../components/FisaPortaltoi.astro';
+import { incarca } from '../../lib/date.js';
+
+export async function getStaticPaths() {
+  const { portaltoiuri } = await incarca();
+  return [...portaltoiuri.keys()].map((id) => ({ params: { id } }));
+}
+const { portaltoiuri, pomi } = await incarca();
+const pt = portaltoiuri.get(Astro.params.id);
+const pePt = pomi.filter((p) => p.portaltoiId === pt.id);
+---
+
+<Baza titlu={`Portaltoiul ${pt.nume}`} sectiune="pomi">
+  <main class="pagina">
+    <p class="fir"><a href="/pomi/">Pomi</a> <span aria-hidden="true">/</span> portaltoi</p>
+    <h1>{pt.nume}</h1>
+    <p class="subtitlu">{pePt.length ? `${pePt.length} pomi din livadă sunt altoiți pe ${pt.nume}.` : `Niciun pom pe ${pt.nume} deocamdată.`}</p>
+    <p>{pePt.map((p, i) => (<>{i > 0 && ' '}<a class="cip" href={p.url}>{p.eticheta} · {p.soiNume}</a></>))}</p>
+    <FisaPortaltoi pt={pt} titlu={false} />
+  </main>
+</Baza>
+<style>.fir { color: var(--grafit); font-stretch: 85%; }</style>

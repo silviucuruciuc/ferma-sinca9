@@ -1,0 +1,248 @@
+---
+import Baza from '../../layouts/Baza.astro';
+import { incarca, SITE } from '../../lib/date.js';
+import { qrSvg } from '../../lib/qr.js';
+
+const { pomi } = await incarca();
+const activi = pomi.filter((p) => !p.stareInfo.istoric);
+const etichete = await Promise.all(activi.map(async (p) => ({ p, qr: await qrSvg(p.qr) })));
+const specii = [...new Map(activi.map((p) => [p.specie, p.specieInfo.nume])).entries()];
+const domeniu = SITE.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+---
+
+<Baza titlu="Etichete QR" sectiune="etichete">
+  <main class="pagina">
+    <div class="ecran">
+      <h1>Etichete QR</h1>
+      <p class="subtitlu">
+        Fiecare cod duce la pagina pomului. Printează pe hârtie autocolantă rezistentă la apă (sau laminează) și
+        prinde eticheta de tutore, nu strâns pe ramură.
+      </p>
+      <div class="controale">
+        <label>Format
+          <select id="format">
+            <option value="mic">Mic · 50 × 25 mm</option>
+            <option value="mediu" selected>Mediu · 70 × 35 mm</option>
+            <option value="mare">Mare · 90 × 45 mm</option>
+          </select>
+        </label>
+        <label>Specie
+          <select id="specie">
+            <option value="">Toate</option>
+            {specii.map(([cod, nume]) => <option value={cod}>{nume}</option>)}
+          </select>
+        </label>
+        <label>Stare
+          <select id="stare">
+            <option value="">Toate</option>
+            <option value="plantat">Doar cele plantate</option>
+            <option value="comandat">Doar cele comandate</option>
+          </select>
+        </label>
+        <button type="button" class="buton plin" id="printeaza">Printează</button>
+      </div>
+      <p class="numar" id="numar" aria-live="polite"></p>
+      <p class="atentie-domeniu">
+        Codurile duc la <strong>{domeniu}</strong>. Printează-le după ce domeniul funcționează: scanează întâi o etichetă de pe ecran.
+      </p>
+    </div>
+
+    <div class="foaie mediu" id="foaie">
+      {
+        etichete.map(({ p, qr }) => (
+          <article class="eticheta" data-id={p.id} data-specie={p.specie} data-stare={p.stare === 'comandat' ? 'comandat' : 'plantat'} style={`--c:${p.specieInfo.culoare}`}>
+            <div class="et-qr" set:html={qr} />
+            <div class="et-text">
+              <div class="et-id">{p.eticheta}</div>
+              <div class="et-soi">{p.soiNume}</div>
+              {(p.portaltoiNume || p.nr) && <div class="et-pt">{[p.portaltoiNume, p.nr ? `nr. ${p.nr}` : null].filter(Boolean).join(' · ')}</div>}
+              <div class="et-url"><span>{domeniu}</span><span>/pomi/{p.id}</span></div>
+            </div>
+          </article>
+        ))
+      }
+    </div>
+  </main>
+</Baza>
+
+<script>
+  const foaie = document.getElementById('foaie')!;
+  const format = document.getElementById('format') as HTMLSelectElement;
+  const specie = document.getElementById('specie') as HTMLSelectElement;
+  const stare = document.getElementById('stare') as HTMLSelectElement;
+  const unul = new URLSearchParams(location.search).get('id');
+
+  const aplica = () => {
+    foaie.className = `foaie ${format.value}`;
+    let n = 0;
+    foaie.querySelectorAll<HTMLElement>('.eticheta').forEach((el) => {
+      const ok = unul ? el.dataset.id === unul : (!specie.value || el.dataset.specie === specie.value) && (!stare.value || el.dataset.stare === stare.value);
+      el.hidden = !ok;
+      if (ok) n++;
+    });
+    document.getElementById('numar')!.textContent = unul ? `O singură etichetă: ${unul}. Șterge „?id=…” din adresă pentru toate.` : `${n} etichete`;
+  };
+  [format, specie, stare].forEach((s) => s.addEventListener('change', aplica));
+  document.getElementById('printeaza')!.addEventListener('click', () => print());
+  aplica();
+</script>
+
+<style>
+  .controale {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1rem;
+    align-items: end;
+    margin: 1rem 0 0.5rem;
+  }
+  .controale label {
+    display: grid;
+    gap: 0.25rem;
+    font-weight: 600;
+    font-stretch: 85%;
+  }
+  .controale select {
+    min-height: 2.75rem;
+    padding: 0.4rem 0.6rem;
+    border: 1.5px solid var(--cerneala);
+    border-radius: var(--r);
+    background: var(--alb);
+    font: inherit;
+  }
+  .numar,
+  .atentie-domeniu {
+    color: var(--grafit);
+    font-size: 0.92rem;
+  }
+
+  .foaie {
+    --w: 70mm;
+    --h: 35mm;
+    --qr: 29mm;
+    --id: 15pt;
+    --soi: 9.5pt;
+    --mic: 7pt;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3mm;
+    margin-top: 1rem;
+  }
+  .foaie.mic {
+    --w: 50mm;
+    --h: 25mm;
+    --qr: 20mm;
+    --id: 11pt;
+    --soi: 7.5pt;
+    --mic: 5.5pt;
+  }
+  .foaie.mare {
+    --w: 90mm;
+    --h: 45mm;
+    --qr: 38mm;
+    --id: 20pt;
+    --soi: 12pt;
+    --mic: 8pt;
+  }
+
+  .eticheta {
+    position: relative;
+    width: var(--w);
+    height: var(--h);
+    display: grid;
+    grid-template-columns: var(--qr) 1fr;
+    align-items: center;
+    gap: 2.5mm;
+    padding: 2.5mm 2.5mm 2.5mm 7mm;
+    background: #fff;
+    color: #000;
+    border: 0.25mm dashed #9aa39d;
+    break-inside: avoid;
+    overflow: hidden;
+  }
+  .eticheta[hidden] {
+    display: none;
+  }
+  .eticheta::before {
+    content: '';
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 2mm;
+    background: var(--c);
+  }
+  .eticheta::after {
+    content: '';
+    position: absolute;
+    left: 3.2mm;
+    top: 50%;
+    width: 2.6mm;
+    height: 2.6mm;
+    margin-top: -1.3mm;
+    border-radius: 50%;
+    border: 0.3mm solid #666;
+  }
+  .et-qr {
+    width: var(--qr);
+    height: var(--qr);
+  }
+  .et-text {
+    min-width: 0;
+    display: grid;
+    gap: 0.6mm;
+    line-height: 1.1;
+  }
+  .et-id {
+    font-stretch: 62%;
+    font-weight: 820;
+    font-size: var(--id);
+  }
+  .et-soi {
+    font-weight: 620;
+    font-stretch: 85%;
+    font-size: var(--soi);
+  }
+  .et-url span {
+    display: block;
+    white-space: nowrap;
+  }
+  .et-pt,
+  .et-url {
+    font-size: var(--mic);
+    font-stretch: 85%;
+    color: #333;
+    overflow-wrap: anywhere;
+  }
+
+  @media print {
+    @page {
+      size: A4;
+      margin: 8mm;
+    }
+    :global(.bara),
+    .ecran {
+      display: none !important;
+    }
+    :global(body),
+    :global(html) {
+      background: #fff;
+    }
+    .pagina {
+      padding: 0;
+      max-width: none;
+    }
+    .foaie {
+      margin: 0;
+    }
+    .eticheta {
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+  }
+</style>
+
+<style is:global>
+  .et-qr svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+</style>

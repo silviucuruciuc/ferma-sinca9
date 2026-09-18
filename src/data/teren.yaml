@@ -1,0 +1,88 @@
+# Planul terenului — Ferma Șinca 90 (Șinca Nouă, jud. Brașov, ~700 m)
+#
+# ATENȚIE: conturul de mai jos e o SCHIȚĂ (dreptunghiuri cu suprafețele din CF).
+# Înlocuiește-l cu punctele din planul cadastral: pune `sistem: stereo70`
+# și, la fiecare parcelă, câte un punct pe linie „X Y” (X = Nord, Y = Est), exact ca în tabel.
+#
+# Sistemul local: metri, x crește spre EST, y crește spre NORD, originea în colțul de SUD-VEST.
+# Strada e pe latura de VEST (stânga planului). Nordul e sus.
+nume: Ferma Șinca 90
+localitate: Șinca Nouă, jud. Brașov
+sistem: local
+# Folosit doar când sistem = stereo70: punctul care devine (0, 0) în sistemul local.
+# Nu-l schimba după ce ai așezat pomii — pozițiile lor sunt relative la el.
+origine_stereo70:
+  x:
+  y:
+parcele:
+  - nume: CF 105881
+    suprafata_mp: 1200
+    puncte: |
+      0 0
+      58 0
+      58 20.7
+      0 20.7
+  - nume: CF 105882
+    suprafata_mp: 1000
+    puncte: |
+      0 20.7
+      48.3 20.7
+      48.3 41.4
+      0 41.4
+zone:
+  - nume: Stradă
+    tip: drum
+    puncte: |
+      -7 -3
+      -1 -3
+      -1 44.4
+      -7 44.4
+  - nume: Livadă
+    tip: livada
+    aproximativ: true
+    puncte: |
+      0 0
+      26 0
+      26 41.4
+      0 41.4
+  - nume: Bucătărie de vară + foișor
+    tip: constructie
+    aproximativ: true
+    puncte: |
+      1 1
+      8 1
+      8 6
+      1 6
+  - nume: Barn 50
+    tip: constructie
+    aproximativ: true
+    puncte: |
+      28 3
+      36 3
+      36 9
+      28 9
+  - nume: Casă (viitoare)
+    tip: constructie
+    aproximativ: true
+    puncte: |
+      34 40.4
+      46.3 40.4
+      46.3 29
+      40.5 29
+      40.5 34.5
+      34 34.5
+  - nume: Grădină de legume
+    tip: gradina
+    aproximativ: true
+    puncte: |
+      39 2
+      55 2
+      55 15
+      39 15
+repere:
+  - nume: Poartă (pct. 200)
+    x: 0
+    y: 20.7
+  - nume: Fântână (aprox.)
+    x: 37
+    y: 19

@@ -1,0 +1,200 @@
+// Configurația Sveltia CMS, generată la build din ferma.config.json și src/lib/specii.js,
+// ca listele (specii, stări, tipuri de jurnal) să fie mereu aceleași ca pe site.
+import * as yaml from 'js-yaml';
+import config from '../../../ferma.config.json';
+import { SPECII, STARI, TIPURI, FORME, CONDUCERI, POLENIZARE } from '../../lib/specii.js';
+
+const optiuni = (o: Record<string, any>) => Object.entries(o).map(([value, v]) => ({ label: typeof v === 'string' ? v : v.nume, value }));
+const specii = optiuni(SPECII);
+const opt = { required: false };
+const text = (name: string, label: string, extra = {}) => ({ name, label, widget: 'string', ...opt, ...extra });
+const data = (name: string, label: string, extra = {}) => ({ name, label, widget: 'datetime', time_format: false, format: 'YYYY-MM-DD', date_format: 'DD.MM.YYYY', ...extra });
+const nr = (name: string, label: string, value_type = 'float', extra = {}) => ({ name, label, widget: 'number', value_type, ...opt, ...extra });
+const puncte = { name: 'puncte', label: 'Puncte', widget: 'text', hint: 'Un punct pe linie: „x y”. În Stereo 70: X (Nord) Y (Est), ca în planul cadastral.' };
+
+const cms = {
+  backend: {
+    name: 'github',
+    repo: `${config.github.owner}/${config.github.repo}`,
+    branch: config.github.branch,
+    // base_url (autentificarea prin Worker) se setează în /admin/index.html, după domeniul curent.
+    commit_messages: {
+      create: 'CMS: adaugă {{collection}} {{slug}}',
+      update: 'CMS: actualizează {{collection}} {{slug}}',
+      delete: 'CMS: șterge {{collection}} {{slug}}',
+      uploadMedia: 'CMS: încarcă {{path}}',
+      deleteMedia: 'CMS: șterge {{path}}',
+    },
+  },
+  site_url: config.site.url,
+  display_url: config.site.url,
+  media_folder: 'public/media',
+  public_folder: '/media',
+  media_libraries: {
+    default: {
+      config: {
+        max_file_size: 25_000_000,
+        // Pozele de pe telefon se micșorează și se convertesc în WebP înainte de upload.
+        transformations: { raster_image: { format: 'webp', quality: 80, width: 2000, height: 2000 } },
+      },
+    },
+  },
+  slug: { encoding: 'ascii', clean_accents: true, sanitize_replacement: '-' },
+  editor: { preview: false },
+  collections: [
+    {
+      name: 'jurnal',
+      label: 'Jurnal',
+      label_singular: 'Înregistrare',
+      description: 'Ce s-a întâmplat în livadă. Pentru recoltă și măsurători, pune un singur pom pe înregistrare.',
+      folder: 'src/content/jurnal',
+      extension: 'md',
+      format: 'frontmatter',
+      create: true,
+      identifier_field: 'titlu',
+      slug: '{{year}}-{{month}}-{{day}}-{{slug}}',
+      summary: '{{data}} · {{titlu}}',
+      sortable_fields: ['data', 'titlu', 'tip'],
+      fields: [
+        { name: 'titlu', label: 'Titlu', widget: 'string' },
+        data('data', 'Data', { default: '{{now}}' }),
+        { name: 'tip', label: 'Tip', widget: 'select', options: optiuni(TIPURI), default: 'observatie' },
+        { name: 'pomi', label: 'Pomi', widget: 'relation', collection: 'pomi', value_field: 'id', search_fields: ['id', 'soi'], display_fields: ['id', 'soi'], multiple: true, ...opt },
+        { name: 'specii', label: 'Toți pomii din speciile…', widget: 'select', options: specii, multiple: true, ...opt, hint: 'Ex.: un tratament făcut la toți perii.' },
+        { name: 'toata_livada', label: 'Se aplică întregii livezi', widget: 'boolean', default: false, ...opt },
+        { name: 'stare_sanatate', label: 'Stare observată', widget: 'select', options: [{ label: 'Bun', value: 'bun' }, { label: 'Atenție', value: 'atentie' }, { label: 'Problemă', value: 'problema' }], ...opt },
+        nr('inaltime_cm', 'Înălțime (cm)', 'int'),
+        nr('trunchi_mm', 'Diametrul trunchiului la 30 cm (mm)', 'int'),
+        nr('recolta_kg', 'Recoltă (kg)'),
+        text('produs', 'Produs / doză', { hint: 'Pentru tratamente și fertilizări.' }),
+        { name: 'poze', label: 'Poze', widget: 'list', ...opt, field: { name: 'poza', label: 'Poză', widget: 'image' } },
+        { name: 'body', label: 'Note', widget: 'markdown', ...opt },
+      ],
+    },
+    {
+      name: 'pomi',
+      label: 'Pomi și arbuști',
+      label_singular: 'Pom',
+      folder: 'src/content/pomi',
+      extension: 'yaml',
+      format: 'yaml',
+      create: true,
+      identifier_field: 'id',
+      slug: '{{id}}',
+      summary: '{{id}} · {{soi}} · {{stare}}',
+      sortable_fields: ['id', 'specie', 'stare', 'nr_inventar'],
+      fields: [
+        { name: 'id', label: 'ID', widget: 'string', hint: 'specie-număr, ex. par-17. Apare pe eticheta QR — nu-l schimba după printare.', pattern: ['^[a-z]+-\\d{2,3}$', 'Format: specie-NN, ex. par-17'] },
+        { name: 'specie', label: 'Specie', widget: 'select', options: specii },
+        { name: 'soi', label: 'Soi', widget: 'relation', collection: 'soiuri', value_field: '{{slug}}', search_fields: ['nume'], display_fields: ['nume', 'specie'] },
+        { name: 'portaltoi', label: 'Portaltoi', widget: 'relation', collection: 'portaltoiuri', value_field: '{{slug}}', search_fields: ['nume'], display_fields: ['nume'], ...opt },
+        { name: 'forma', label: 'Formă', widget: 'select', options: optiuni(FORME), ...opt },
+        { name: 'stare', label: 'Stare', widget: 'select', options: optiuni(STARI), default: 'comandat' },
+        data('data_plantare', 'Data plantării', opt),
+        text('pepiniera', 'Pepinieră', { default: 'Pepinierele Roman' }),
+        text('comanda', 'Comandă'),
+        nr('nr_inventar', 'Nr. în inventar', 'int'),
+        text('talie', 'Talie la maturitate'),
+        nr('coroana_m', 'Diametrul coroanei la maturitate (m)', 'float', { hint: 'Desenat pe plan ca cerc punctat; folosit la avertizarea de distanță.' }),
+        text('productie_estimata', 'Producție estimată'),
+        { name: 'conducere', label: 'Formă de conducere', widget: 'select', options: CONDUCERI, ...opt },
+        { name: 'foto', label: 'Poză principală', widget: 'image', ...opt },
+        { name: 'note', label: 'Note', widget: 'text', ...opt },
+      ],
+    },
+    {
+      name: 'soiuri',
+      label: 'Soiuri',
+      label_singular: 'Soi',
+      folder: 'src/content/soiuri',
+      extension: 'yaml',
+      format: 'yaml',
+      create: true,
+      identifier_field: 'nume',
+      slug: '{{specie}}-{{nume}}',
+      summary: '{{nume}} ({{specie}})',
+      fields: [
+        { name: 'nume', label: 'Nume', widget: 'string' },
+        { name: 'specie', label: 'Specie', widget: 'select', options: specii },
+        text('coacere', 'Coacere'),
+        text('utilizare', 'Utilizare'),
+        { name: 'polenizare', label: 'Polenizare', widget: 'select', options: optiuni(POLENIZARE), default: 'necunoscut' },
+        { name: 'polenizatori', label: 'Polenizatori recomandați', widget: 'list', ...opt, field: { name: 'soi', label: 'Soi', widget: 'string' } },
+        text('rezistenta', 'Rezistență'),
+        text('note', 'Note (700 m)'),
+        { name: 'rezumat', label: 'Rezumat', widget: 'text', ...opt },
+        text('pepiniera_url', 'Link la pepinieră'),
+        { name: 'de_verificat', label: 'De verificat', widget: 'text', ...opt },
+      ],
+    },
+    {
+      name: 'portaltoiuri',
+      label: 'Portaltoiuri',
+      label_singular: 'Portaltoi',
+      folder: 'src/content/portaltoiuri',
+      extension: 'yaml',
+      format: 'yaml',
+      create: true,
+      identifier_field: 'nume',
+      slug: '{{nume}}',
+      fields: [
+        { name: 'nume', label: 'Nume', widget: 'string' },
+        { name: 'specii', label: 'Pentru speciile', widget: 'select', options: specii, multiple: true, ...opt },
+        text('vigoare', 'Vigoare'),
+        text('talie', 'Talie'),
+        text('tutorare', 'Tutorare'),
+        text('distante', 'Distanțe de plantare'),
+        text('sol', 'Sol'),
+        text('precocitate', 'Intrare pe rod'),
+        { name: 'rezumat', label: 'Rezumat', widget: 'text', ...opt },
+        text('pepiniera_url', 'Link la pepinieră'),
+      ],
+    },
+    {
+      name: 'setari',
+      label: 'Plan și poziții',
+      files: [
+        {
+          name: 'teren',
+          label: 'Planul terenului',
+          file: 'src/data/teren.yaml',
+          format: 'yaml',
+          fields: [
+            text('nume', 'Nume'),
+            text('localitate', 'Localitate'),
+            { name: 'sistem', label: 'Sistem de coordonate', widget: 'select', options: [{ label: 'Local (metri față de colțul de SV)', value: 'local' }, { label: 'Stereo 70 (din planul cadastral)', value: 'stereo70' }], default: 'local' },
+            { name: 'origine_stereo70', label: 'Originea (doar pentru Stereo 70)', widget: 'object', ...opt, hint: 'Punctul care devine (0, 0). Nu-l schimba după ce ai așezat pomii.', fields: [nr('x', 'X (Nord)'), nr('y', 'Y (Est)')] },
+            { name: 'parcele', label: 'Parcele', widget: 'list', fields: [text('nume', 'Nume'), nr('suprafata_mp', 'Suprafața din CF (m²)'), puncte] },
+            { name: 'zone', label: 'Zone', widget: 'list', ...opt, fields: [text('nume', 'Nume'), { name: 'tip', label: 'Tip', widget: 'select', options: ['livada', 'gradina', 'constructie', 'drum', 'apa', 'alta'] }, { name: 'aproximativ', label: 'Aproximativ', widget: 'boolean', default: false, ...opt }, puncte] },
+            { name: 'repere', label: 'Repere', widget: 'list', ...opt, fields: [text('nume', 'Nume'), nr('x', 'x (m spre est)'), nr('y', 'y (m spre nord)')] },
+          ],
+        },
+        {
+          name: 'pozitii',
+          label: 'Pozițiile pomilor',
+          file: 'src/data/pozitii.json',
+          format: 'json',
+          fields: [
+            {
+              name: 'pozitii',
+              label: 'Poziții',
+              widget: 'list',
+              summary: '{{pom}}: x {{x}} · y {{y}}',
+              hint: 'Mai simplu: pe plan, „Aranjează pe plan”.',
+              fields: [
+                { name: 'pom', label: 'Pom', widget: 'relation', collection: 'pomi', value_field: 'id', search_fields: ['id', 'soi'], display_fields: ['id', 'soi'] },
+                nr('x', 'x (m spre est)', 'float', { required: true }),
+                nr('y', 'y (m spre nord)', 'float', { required: true }),
+              ],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+export const GET = () =>
+  new Response(yaml.dump(cms, { lineWidth: 140, noRefs: true }), {
+    headers: { 'Content-Type': 'text/yaml; charset=utf-8' },
+  });

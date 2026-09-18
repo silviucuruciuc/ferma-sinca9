@@ -1,0 +1,25 @@
+---
+import Baza from '../../layouts/Baza.astro';
+import FisaSoi from '../../components/FisaSoi.astro';
+import { incarca, polenizatoriInLivada } from '../../lib/date.js';
+import { specie } from '../../lib/specii.js';
+
+export async function getStaticPaths() {
+  const { soiuri } = await incarca();
+  return [...soiuri.keys()].map((id) => ({ params: { id } }));
+}
+const { soiuri, pomi } = await incarca();
+const soi = soiuri.get(Astro.params.id);
+const aiSoi = pomi.filter((p) => p.soiId === soi.id);
+---
+
+<Baza titlu={`${soi.nume} · soi de ${specie(soi.specie).nume.toLowerCase()}`} sectiune="pomi">
+  <main class="pagina">
+    <p class="fir"><a href="/pomi/">Pomi</a> <span aria-hidden="true">/</span> soi</p>
+    <h1>{soi.nume}</h1>
+    <p class="subtitlu">Soi de {specie(soi.specie).nume.toLowerCase()}. {aiSoi.length ? `În livadă: ${aiSoi.length}.` : 'Nu ai încă niciun pom din acest soi.'}</p>
+    <p>{aiSoi.map((p, i) => (<>{i > 0 && ' '}<a class="cip" href={p.url}>{p.eticheta}{p.portaltoiNume ? ` · ${p.portaltoiNume}` : ''}</a></>))}</p>
+    <FisaSoi soi={soi} polenizatoriPrezenti={polenizatoriInLivada(soi, pomi)} titlu={false} />
+  </main>
+</Baza>
+<style>.fir { color: var(--grafit); font-stretch: 85%; }</style>

@@ -1,0 +1,3 @@
+#!/bin/sh
+# Blochează orice push care nu merge în repo-ul personal din ferma.config.json.
+exec node scripts/garda.mjs --push "$2"

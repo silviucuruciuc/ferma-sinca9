@@ -1,0 +1,25 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "ferma-sinca90",
+  // ID-ul contului Cloudflare PERSONAL (dash.cloudflare.com → dreapta jos pe pagina contului: „Account ID”).
+  // Deploy-ul merge doar în acest cont; scripts/garda.mjs refuză placeholderul și orice cont Fortech/Aiperion.
+  "account_id": "COMPLETEAZA-ID-CONT-CLOUDFLARE-PERSONAL",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-08-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "html_handling": "auto-trailing-slash",
+    "run_worker_first": ["/oauth/*"]
+  },
+  "vars": {
+    // Client ID-ul aplicației OAuth GitHub (nu e secret). Secretul: npx wrangler secret put GITHUB_CLIENT_SECRET
+    "GITHUB_CLIENT_ID": "",
+    // public_repo dacă repo-ul e public (recomandat); „repo” dacă îl faci privat.
+    "GITHUB_SCOPE": "public_repo"
+  },
+  "observability": { "enabled": true }
+  // După ce adaugi ferma-sinca90.ro în contul Cloudflare personal, decomentează:
+  // ,"routes": [{ "pattern": "ferma-sinca90.ro", "custom_domain": true }]
+}

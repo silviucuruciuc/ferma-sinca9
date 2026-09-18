@@ -1,0 +1,59 @@
+---
+import '../styles/global.css';
+import config from '../../ferma.config.json';
+
+interface Props {
+  titlu?: string;
+  descriere?: string;
+  sectiune?: 'plan' | 'pomi' | 'jurnal' | 'etichete' | '';
+  plin?: boolean;
+}
+
+const { titlu, descriere = config.site.descriere, sectiune = '', plin = false } = Astro.props;
+const numeSite = config.site.nume;
+const titluComplet = titlu ? `${titlu} · ${numeSite}` : numeSite;
+const indexare = (config.site as { indexare?: boolean }).indexare === true;
+
+const nav = [
+  { href: '/', eticheta: 'Plan', cheie: 'plan' },
+  { href: '/pomi/', eticheta: 'Pomi', cheie: 'pomi' },
+  { href: '/jurnal/', eticheta: 'Jurnal', cheie: 'jurnal' },
+  { href: '/etichete/', eticheta: 'Etichete QR', scurt: 'QR', cheie: 'etichete' },
+  { href: '/admin/', eticheta: 'Admin', cheie: 'admin' },
+];
+---
+
+<!doctype html>
+<html lang="ro">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{titluComplet}</title>
+    <meta name="description" content={descriere} />
+    {!indexare && <meta name="robots" content="noindex, nofollow" />}
+    <meta name="theme-color" content="#1c2a26" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="canonical" href={new URL(Astro.url.pathname, Astro.site)} />
+  </head>
+  <body class:list={[{ 'mod-plin': plin }]}>
+    <header class="bara">
+      <a class="marca" href="/" aria-label={`${numeSite} — planul livezii`}>
+        <svg width="26" height="18" viewBox="0 0 26 18" aria-hidden="true">
+          <path d="M6 0H26V18H6L0 12V6Z" fill="#f2c230" />
+          <circle cx="6.2" cy="9" r="2" fill="#1c2a26" />
+        </svg>
+        {numeSite}
+      </a>
+      <nav class="nav" aria-label="Principal">
+        {
+          nav.map((n) => (
+            <a href={n.href} aria-current={sectiune === n.cheie ? 'page' : undefined}>
+              {n.scurt ? (<><span class="lung">{n.eticheta}</span><span class="scurt">{n.scurt}</span></>) : n.eticheta}
+            </a>
+          ))
+        }
+      </nav>
+    </header>
+    <slot />
+  </body>
+</html>

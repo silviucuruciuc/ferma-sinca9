@@ -1,0 +1,76 @@
+---
+import { POLENIZARE, specie } from '../lib/specii.js';
+import { cautaLaPepiniera, linkCMS } from '../lib/date.js';
+
+interface Props {
+  soi: any;
+  polenizatoriPrezenti?: any[];
+  titlu?: boolean;
+}
+const { soi, polenizatoriPrezenti = [], titlu = true } = Astro.props;
+const prezenti = new Set(polenizatoriPrezenti.map((p) => p.soiNume));
+---
+
+<div class="fisa-soi">
+  {titlu && <h2>Soiul {soi.nume}</h2>}
+  {soi.de_verificat && <p class="de-verificat"><strong>De verificat:</strong> {soi.de_verificat}</p>}
+  {soi.rezumat && <p class="proza">{soi.rezumat}</p>}
+  <dl class="fisa">
+    <dt>Specie</dt>
+    <dd>{specie(soi.specie).nume}</dd>
+    {soi.coacere && (<><dt>Coacere</dt><dd>{soi.coacere}</dd></>)}
+    {soi.utilizare && (<><dt>Utilizare</dt><dd>{soi.utilizare}</dd></>)}
+    <dt>Polenizare</dt>
+    <dd>{POLENIZARE[soi.polenizare] ?? soi.polenizare ?? 'Necunoscut'}</dd>
+    {
+      soi.polenizatori?.length > 0 && (
+        <>
+          <dt>Polenizatori recomandați</dt>
+          <dd>
+            {soi.polenizatori.map((n: string, i: number) => (
+              <>
+                {i > 0 && ', '}
+                {[...prezenti].some((x) => x.toLowerCase().includes(n.toLowerCase()) || n.toLowerCase().includes(x.toLowerCase())) ? <strong>{n}</strong> : n}
+              </>
+            ))}
+          </dd>
+        </>
+      )
+    }
+    {
+      polenizatoriPrezenti.length > 0 && (
+        <>
+          <dt>Îi ai în livadă</dt>
+          <dd>
+            {polenizatoriPrezenti.map((p, i) => (
+              <>
+                {i > 0 && ' '}
+                <a class="cip" href={p.url}>{p.eticheta} · {p.soiNume}</a>
+              </>
+            ))}
+          </dd>
+        </>
+      )
+    }
+    {soi.rezistenta && (<><dt>Rezistență</dt><dd>{soi.rezistenta}</dd></>)}
+    {soi.note && (<><dt>Notele tale (700 m)</dt><dd>{soi.note}</dd></>)}
+  </dl>
+  <p class="linkuri">
+    {soi.pepiniera_url ? <a href={soi.pepiniera_url} rel="noopener">Pagina soiului la pepinieră</a> : <a href={cautaLaPepiniera(soi.nume)} rel="noopener">Caută „{soi.nume}” la Pepinierele Roman</a>}
+    <span aria-hidden="true"> · </span>
+    <a href={linkCMS.soi(soi.id)}>Editează fișa soiului</a>
+  </p>
+</div>
+
+<style>
+  .de-verificat {
+    padding: 0.7rem 0.9rem;
+    border-left: 4px solid var(--atentie);
+    background: #f7eed8;
+    border-radius: 0 var(--r) var(--r) 0;
+    max-width: 66ch;
+  }
+  .linkuri {
+    font-size: 0.95rem;
+  }
+</style>

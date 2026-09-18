@@ -1,0 +1,280 @@
+---
+import Baza from '../../layouts/Baza.astro';
+import PlanSvg from '../../components/PlanSvg.astro';
+import Intrare from '../../components/Intrare.astro';
+import FisaSoi from '../../components/FisaSoi.astro';
+import FisaPortaltoi from '../../components/FisaPortaltoi.astro';
+import { incarca, linkCMS, polenizatoriInLivada, dataLunga, numar, STARE_SANATATE } from '../../lib/date.js';
+import { FORME } from '../../lib/specii.js';
+import { qrSvg } from '../../lib/qr.js';
+
+export async function getStaticPaths() {
+  const { pomi } = await incarca();
+  return pomi.map((p) => ({ params: { id: p.id } }));
+}
+
+const { pomi, pomById, teren } = await incarca();
+const p = pomById.get(Astro.params.id);
+const qr = await qrSvg(p.qr);
+const polenizatori = polenizatoriInLivada(p.soi, pomi);
+const fratii = pomi.filter((q) => q.soiId && q.soiId === p.soiId && q.id !== p.id);
+
+const cand = p.dataPlantare
+  ? `plantat pe ${dataLunga(p.dataPlantare)}`
+  : p.stare === 'comandat'
+    ? `de plantat${p.comanda ? ` · comanda ${p.comanda}` : ''}`
+    : 'data plantării nu e trecută';
+
+const ani = [...new Set(p.jurnal.map((j) => j.an))].sort((a, b) => b - a);
+const fisa = [
+  ['Specie', `${p.specieInfo.nume}${p.specieInfo.latin ? ` (${p.specieInfo.latin})` : ''}`],
+  ['Pepinieră', p.pepiniera ?? 'necunoscută'],
+  ['Comandă', p.comanda],
+  ['Plantat', p.dataPlantare ? dataLunga(p.dataPlantare) : null],
+  ['Formă', p.formaCrestere && p.formaCrestere !== 'altoit' ? FORME[p.formaCrestere] ?? p.formaCrestere : null],
+  ['Formă de conducere', p.conducere],
+  ['Talie la maturitate', p.talie],
+  ['Coroană la maturitate', `~${numar(p.coroana)} m diametru`],
+  ['Producție estimată', p.productie],
+  ['Nr. în inventar', p.nr],
+].filter(([, v]) => v != null && v !== '');
+---
+
+<Baza titlu={`${p.eticheta} · ${p.soiNume}`} descriere={`${p.eticheta}: ${p.soiNume}${p.portaltoiNume ? ' pe ' + p.portaltoiNume : ''}.`} sectiune="pomi">
+  <main class="pagina">
+    <p class="fir"><a href="/pomi/">Pomi</a> <span aria-hidden="true">/</span> {p.specieInfo.nume}</p>
+
+    <header class="cap-pom">
+      <div class="tag mare" style={`--c:${p.specieInfo.culoare}`}>
+        <h1 class="tag-id">{p.eticheta}</h1>
+        <div class="tag-soi">
+          {p.soiNume}{p.portaltoiNume && <span class="pt"> / {p.portaltoiNume}</span>}
+        </div>
+      </div>
+      <figure class="qr-pom">
+        <div class="qr" set:html={qr} />
+        <figcaption><a href={`/etichete/?id=${p.id}`}>Printează eticheta</a></figcaption>
+      </figure>
+    </header>
+
+    <p class="stare-linie">
+      <span class="insigna" data-stare={p.stare}>{p.stareInfo.nume}</span>
+      <span>{cand}</span>
+    </p>
+
+    <div class="butoane">
+      <a class="buton galben" href={linkCMS.jurnalNou({ pomi: p.id })}>Adaugă în jurnal</a>
+      {
+        p.stare === 'comandat' && (
+          <a class="buton" href={linkCMS.jurnalNou({ pomi: p.id, tip: 'plantare', titlu: `Plantat ${p.eticheta}` })}>
+            Marchează plantarea
+          </a>
+        )
+      }
+      <a class="buton" href={`/#${p.id}`}>Vezi pe plan</a>
+      <a class="buton" href={linkCMS.pom(p.id)}>Editează fișa</a>
+    </div>
+
+    <div class="grila-pom">
+      <section>
+        <h2>Fișa pomului</h2>
+        <dl class="fisa">
+          {fisa.map(([k, v]) => (<><dt>{k}</dt><dd>{v}</dd></>))}
+        </dl>
+        {p.note && <p class="nota-pom">{p.note}</p>}
+        {
+          fratii.length > 0 && (
+            <p class="mic">
+              Același soi în livadă:{' '}
+              {fratii.map((f, i) => (<>{i > 0 && ' '}<a class="cip" href={f.url}>{f.eticheta}</a></>))}
+            </p>
+          )
+        }
+      </section>
+
+      <section>
+        <h2>Pe plan</h2>
+        {
+          p.pozitie ? (
+            <>
+              <a href={`/#${p.id}`} class="mini-link" aria-label="Deschide planul la acest pom">
+                <PlanSvg teren={teren} pomi={pomi} mini evidentiat={p.id} eticheta={`Poziția pomului ${p.eticheta} pe teren`} />
+              </a>
+              <p class="mic">
+                {numar(p.pozitie.x)} m spre est și {numar(p.pozitie.y)} m spre nord față de colțul de sud-vest.
+              </p>
+            </>
+          ) : (
+            <p class="gol">
+              Nu are încă loc pe plan. Deschide <a href="/">planul</a>, apasă „Aranjează pe plan” și așază-l.
+            </p>
+          )
+        }
+      </section>
+    </div>
+
+    <section>
+      <h2>Evoluție pe ani</h2>
+      {
+        p.ani.length ? (
+          <div class="tabel-cutie">
+            <table>
+              <thead>
+                <tr>
+                  <th>An</th>
+                  <th class="num">Înălțime</th>
+                  <th class="num">Trunchi</th>
+                  <th class="num">Recoltă</th>
+                  <th class="num">Intervenții</th>
+                  <th class="num">Probleme</th>
+                  <th>Stare</th>
+                </tr>
+              </thead>
+              <tbody>
+                {p.ani.map((a) => (
+                  <tr>
+                    <td><a href={`#an-${a.an}`}>{a.an}</a></td>
+                    <td class="num">{a.inaltime != null ? `${numar(a.inaltime, 0)} cm` : '—'}</td>
+                    <td class="num">{a.trunchi != null ? `${numar(a.trunchi, 0)} mm` : '—'}</td>
+                    <td class="num">{a.recolta != null ? `${numar(a.recolta)} kg` : '—'}</td>
+                    <td class="num">{a.interventii || '—'}</td>
+                    <td class="num">{a.probleme || '—'}</td>
+                    <td>{a.stare ? STARE_SANATATE[a.stare] ?? a.stare : '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p class="gol">Încă nimic în jurnal pentru acest pom.</p>
+        )
+      }
+      <p class="mic">Recolta și măsurătorile se adună doar din înregistrările făcute pentru un singur pom.</p>
+    </section>
+
+    <section>
+      <h2>Jurnal</h2>
+      {
+        ani.map((an) => (
+          <>
+            <h3 id={`an-${an}`} class="an">{an}</h3>
+            {p.jurnal
+              .filter((j) => j.an === an)
+              .reverse()
+              .map((j) => (
+                <Intrare j={j} arataPomi={j.pomi.length > 1} />
+              ))}
+          </>
+        ))
+      }
+      {!ani.length && <p class="gol">Prima înregistrare va fi probabil plantarea.</p>}
+    </section>
+
+    {
+      p.soi && (
+        <section>
+          <FisaSoi soi={p.soi} polenizatoriPrezenti={polenizatori} />
+        </section>
+      )
+    }
+    {
+      p.portaltoi && (
+        <section>
+          <FisaPortaltoi pt={p.portaltoi} />
+        </section>
+      )
+    }
+  </main>
+</Baza>
+
+<style>
+  .fir {
+    margin: 0 0 1rem;
+    color: var(--grafit);
+    font-stretch: 85%;
+  }
+
+  .cap-pom {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 1rem 1.5rem;
+  }
+
+  .cap-pom .tag {
+    flex: 1 1 22rem;
+    align-content: center;
+  }
+
+  .cap-pom h1 {
+    margin: 0;
+  }
+
+  .qr-pom {
+    margin: 0;
+    display: grid;
+    justify-items: center;
+    gap: 0.35rem;
+    padding: 0.75rem;
+    background: var(--alb);
+    border: 1px solid var(--linie);
+    border-radius: var(--r);
+  }
+
+  .qr-pom .qr {
+    width: 7.5rem;
+    height: 7.5rem;
+  }
+
+  .qr-pom figcaption {
+    font-size: 0.85rem;
+  }
+
+  .stare-linie {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.6rem;
+    margin: 1.1rem 0 0;
+    color: var(--grafit);
+  }
+
+  .grila-pom {
+    display: grid;
+    gap: 0 2.5rem;
+  }
+
+  @media (min-width: 52rem) {
+    .grila-pom {
+      grid-template-columns: 1.1fr 1fr;
+    }
+  }
+
+  .nota-pom {
+    padding: 0.7rem 0.9rem;
+    border-left: 4px solid var(--molid);
+    background: var(--alb);
+    border-radius: 0 var(--r) var(--r) 0;
+  }
+
+  .mini-link {
+    display: block;
+  }
+
+  .mic {
+    font-size: 0.9rem;
+    color: var(--grafit);
+  }
+
+  .an {
+    margin-top: 1.4rem;
+    font-size: 1.35rem;
+  }
+</style>
+
+<style is:global>
+  .qr-pom svg {
+    width: 100%;
+    height: 100%;
+  }
+</style>

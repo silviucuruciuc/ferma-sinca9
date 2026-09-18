@@ -1,0 +1,30 @@
+---
+import { cautaLaPepiniera, linkCMS } from '../lib/date.js';
+
+interface Props {
+  pt: any;
+  titlu?: boolean;
+}
+const { pt, titlu = true } = Astro.props;
+const randuri = [
+  ['Vigoare', pt.vigoare],
+  ['Talie', pt.talie],
+  ['Tutorare', pt.tutorare],
+  ['Distanțe', pt.distante],
+  ['Sol', pt.sol],
+  ['Intrare pe rod', pt.precocitate],
+].filter(([, v]) => v);
+---
+
+<div class="fisa-portaltoi">
+  {titlu && <h2>Portaltoiul {pt.nume}</h2>}
+  {pt.rezumat && <p class="proza">{pt.rezumat}</p>}
+  <dl class="fisa">
+    {randuri.map(([k, v]) => (<><dt>{k}</dt><dd>{v}</dd></>))}
+  </dl>
+  <p>
+    {pt.pepiniera_url ? <a href={pt.pepiniera_url} rel="noopener">Soiuri pe {pt.nume} la pepinieră</a> : <a href={cautaLaPepiniera(pt.nume)} rel="noopener">Caută „{pt.nume}” la Pepinierele Roman</a>}
+    <span aria-hidden="true"> · </span>
+    <a href={linkCMS.portaltoi(pt.id)}>Editează fișa</a>
+  </p>
+</div>

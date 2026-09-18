@@ -1,0 +1,384 @@
+---
+import { centru, arie } from '../lib/teren.js';
+
+interface Props {
+  teren: any;
+  pomi: any[];
+  mini?: boolean;
+  evidentiat?: string;
+  id?: string;
+  eticheta?: string;
+}
+
+const { teren, pomi, mini = false, evidentiat, id, eticheta = 'Planul terenului' } = Astro.props;
+const { minX, maxX, minY, maxY } = teren.limite;
+const M = mini ? 2 : 6;
+const W = maxX - minX;
+const H = maxY - minY;
+const sy = (y: number) => +(maxY - y).toFixed(3);
+const pts = (p: number[][]) => p.map(([x, y]) => `${x},${sy(y)}`).join(' ');
+
+// Scara inițială a elementelor „de ecran” (simboluri, texte): metri pe pixel. JS o recalculează.
+const K = mini ? 0 : +((W + 2 * M) / 1100).toFixed(4);
+const scala = `scale(${K})`;
+
+const grila5: { x1: number; y1: number; x2: number; y2: number; zece: boolean }[] = [];
+if (!mini) {
+  for (let x = Math.ceil((minX - M) / 5) * 5; x <= maxX + M; x += 5)
+    grila5.push({ x1: x, y1: -M, x2: x, y2: H + M, zece: x % 10 === 0 });
+  for (let y = Math.ceil((minY - M) / 5) * 5; y <= maxY + M; y += 5)
+    grila5.push({ x1: minX - M, y1: sy(y), x2: maxX + M, y2: sy(y), zece: y % 10 === 0 });
+}
+
+const pePlan = pomi.filter((p) => p.pozitie);
+const fmtArie = (a: number) => `${Math.round(a).toLocaleString('ro-RO')} m²`;
+---
+
+<svg
+  id={id}
+  class:list={['plan', { 'plan-mini': mini }]}
+  viewBox={`${minX - M} ${-M} ${W + 2 * M} ${H + 2 * M}`}
+  preserveAspectRatio="xMidYMid meet"
+  role={mini ? 'img' : 'application'}
+  aria-label={eticheta}
+  data-k={K}
+>
+  {
+    !mini && (
+      <g class="strat-grila" aria-hidden="true">
+        {grila5.map((l) => (
+          <line x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} class:list={['grila', { zece: l.zece }]} />
+        ))}
+      </g>
+    )
+  }
+
+  <g class="strat-zone" aria-hidden="true">
+    {
+      teren.zone.map((z: any) => (
+        <g class:list={['zona', `zona-${z.tip ?? 'alta'}`, { aprox: z.aproximativ }]}>
+          {z.puncte.length > 2 ? <polygon points={pts(z.puncte)} /> : <polyline points={pts(z.puncte)} />}
+        </g>
+      ))
+    }
+  </g>
+
+  <g class="strat-parcele">
+    {teren.parcele.map((p: any) => <polygon class="parcela" points={pts(p.puncte)} />)}
+  </g>
+
+  {
+    !mini && (
+      <g class="strat-texte" aria-hidden="true">
+        {teren.zone
+          .filter((z: any) => z.nume)
+          .map((z: any) => {
+            const [cx, cy] = centru(z.puncte);
+            const ys = z.puncte.map((p: number[]) => p[1]);
+            const xs = z.puncte.map((p: number[]) => p[0]);
+            const sus = ['livada', 'gradina'].includes(z.tip);
+            const vertical = z.tip === 'drum' && Math.max(...ys) - Math.min(...ys) > Math.max(...xs) - Math.min(...xs);
+            const ty = sus ? Math.max(...ys) - 1.2 : cy;
+            return (
+              <g transform={`translate(${cx.toFixed(2)} ${sy(ty)})${vertical ? ' rotate(-90)' : ''}`}>
+                <g class="s" transform={scala}>
+                  <text class:list={['text-zona', `text-${z.tip ?? 'alta'}`]} text-anchor="middle" y={sus ? 8 : 4}>
+                    {z.nume}
+                    {z.aproximativ ? ' (aprox.)' : ''}
+                  </text>
+                </g>
+              </g>
+            );
+          })}
+        {teren.parcele.map((p: any) => {
+          const [cx, cy] = centru(p.puncte);
+          return (
+            <g transform={`translate(${cx.toFixed(2)} ${sy(cy)})`}>
+              <g class="s" transform={scala}>
+                <text class="text-parcela" text-anchor="middle" y="-2">
+                  {p.nume}
+                </text>
+                <text class="text-parcela-mic" text-anchor="middle" y="13">
+                  {p.suprafata_mp ? `${Number(p.suprafata_mp).toLocaleString('ro-RO')} m² (CF)` : fmtArie(Math.abs(arie(p.puncte)))}
+                </text>
+              </g>
+            </g>
+          );
+        })}
+        {teren.repere.map((r: any) => (
+          <g class="reper" transform={`translate(${r.x} ${sy(r.y)})`}>
+            <g class="s" transform={scala}>
+              <path d="M-5 0H5M0 -5V5" />
+              <text x="8" y="4">
+                {r.nume}
+              </text>
+            </g>
+          </g>
+        ))}
+      </g>
+    )
+  }
+
+  <g class="strat-coroane" aria-hidden="true">
+    {
+      pePlan.map((p) => (
+        <circle
+          class="coroana"
+          data-id={p.id}
+          cx={p.pozitie.x}
+          cy={sy(p.pozitie.y)}
+          r={(p.coroana / 2).toFixed(2)}
+          style={`--c:${p.specieInfo.culoare}`}
+        />
+      ))
+    }
+  </g>
+
+  <g class="strat-pomi">
+    {
+      pePlan.map((p) =>
+        mini ? (
+          <circle
+            class:list={['pom-mini', { evidentiat: p.id === evidentiat }]}
+            cx={p.pozitie.x}
+            cy={sy(p.pozitie.y)}
+            r={p.id === evidentiat ? 0.9 : 0.45}
+            style={`--c:${p.specieInfo.culoare}`}
+          />
+        ) : (
+          <a
+            href={p.url}
+            class="pom"
+            data-id={p.id}
+            data-specie={p.specie}
+            data-grupa={p.grupa}
+            data-stare={p.stare}
+            transform={`translate(${p.pozitie.x} ${sy(p.pozitie.y)})`}
+            style={`--c:${p.specieInfo.culoare}`}
+            aria-label={`${p.eticheta}: ${p.soiNume}${p.portaltoiNume ? ' / ' + p.portaltoiNume : ''}`}
+          >
+            <g class="s simbol" transform={scala}>
+              <circle class="inel" r="11" />
+              {p.forma === 'patrat' ? (
+                <rect class="forma" x="-5.5" y="-5.5" width="11" height="11" rx="2" />
+              ) : p.forma === 'romb' ? (
+                <rect class="forma" x="-5" y="-5" width="10" height="10" rx="1" transform="rotate(45)" />
+              ) : (
+                <circle class="forma" r="6.5" />
+              )}
+            </g>
+            <g class="s eticheta-pom" transform={scala}>
+              <text y="-12" text-anchor="middle">
+                {p.id}
+              </text>
+            </g>
+          </a>
+        ),
+      )
+    }
+  </g>
+  <g class="strat-ui"></g>
+</svg>
+
+<style is:global>
+  .plan {
+    display: block;
+    width: 100%;
+    height: 100%;
+    background: var(--alb);
+    font-family: var(--font);
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .plan .grila {
+    stroke: #e4e9e4;
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .plan .grila.zece {
+    stroke: #d3dbd4;
+  }
+
+  .plan .parcela {
+    fill: rgb(238 241 236 / 0.55);
+    stroke: var(--cerneala);
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
+    stroke-linejoin: round;
+  }
+
+  .plan .zona polygon,
+  .plan .zona polyline {
+    fill: rgb(28 42 38 / 0.04);
+    stroke: var(--grafit);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .plan .zona.aprox polygon,
+  .plan .zona.aprox polyline {
+    stroke-dasharray: 5 4;
+  }
+
+  .plan .zona-livada polygon {
+    fill: rgb(91 138 54 / 0.08);
+    stroke: rgb(91 138 54 / 0.7);
+  }
+
+  .plan .zona-gradina polygon {
+    fill: rgb(192 149 28 / 0.08);
+  }
+
+  .plan .zona-constructie polygon {
+    fill: rgb(28 42 38 / 0.12);
+  }
+
+  .plan .zona-drum polygon {
+    fill: #dfe3dc;
+    stroke: none;
+  }
+
+  .plan .zona-apa polygon {
+    fill: rgb(58 92 163 / 0.12);
+  }
+
+  .plan text {
+    fill: var(--cerneala);
+    font-stretch: 75%;
+    font-size: 12px;
+    paint-order: stroke;
+    stroke: var(--alb);
+    stroke-width: 3px;
+    stroke-linejoin: round;
+  }
+
+  .plan .text-zona {
+    fill: var(--grafit);
+    font-weight: 560;
+  }
+
+  .plan .text-drum {
+    font-weight: 700;
+    letter-spacing: 0.06em;
+  }
+
+  .plan .text-parcela {
+    font-weight: 780;
+    font-size: 14px;
+  }
+
+  .plan .text-parcela-mic {
+    fill: var(--grafit);
+    font-size: 11px;
+  }
+
+  .plan .reper path {
+    stroke: var(--cerneala);
+    stroke-width: 1.5;
+  }
+
+  .plan .coroana {
+    fill: color-mix(in srgb, var(--c) 9%, transparent);
+    stroke: color-mix(in srgb, var(--c) 55%, transparent);
+    stroke-width: 1;
+    stroke-dasharray: 3 3;
+    vector-effect: non-scaling-stroke;
+    pointer-events: none;
+  }
+
+  .plan.fara-coroane .coroana {
+    display: none;
+  }
+
+  .plan .pom {
+    cursor: pointer;
+    outline: none;
+  }
+
+  .plan .pom .forma {
+    fill: var(--c);
+    stroke: var(--alb);
+    stroke-width: 1.5;
+  }
+
+  .plan .pom[data-stare='comandat'] .forma {
+    fill: var(--alb);
+    stroke: var(--c);
+    stroke-width: 2.5;
+    stroke-dasharray: 3 2;
+  }
+
+  .plan .pom .inel {
+    fill: transparent;
+    stroke: none;
+  }
+
+  .plan .pom[data-stare='problema'] .inel,
+  .plan .pom[data-stare='observatie'] .inel {
+    stroke: var(--alerta);
+    stroke-width: 2;
+    r: 9.5px;
+  }
+
+  .plan .pom[data-stare='observatie'] .inel {
+    stroke: var(--atentie);
+  }
+
+  .plan .pom:hover .inel,
+  .plan .pom:focus-visible .inel {
+    stroke: var(--cerneala);
+    stroke-width: 2;
+  }
+
+  .plan .pom.selectat .inel {
+    fill: var(--eticheta);
+    stroke: var(--cerneala);
+    stroke-width: 2;
+    r: 12px;
+  }
+
+  .plan .eticheta-pom {
+    display: none;
+  }
+
+  .plan.zoom-apropiat .eticheta-pom,
+  .plan .pom.selectat .eticheta-pom {
+    display: inline;
+  }
+
+  .plan .eticheta-pom text {
+    font-weight: 680;
+    font-size: 11px;
+  }
+
+  .plan .pom.estompat {
+    opacity: 0.18;
+  }
+
+  .plan .pom.ascuns,
+  .plan .coroana.ascuns {
+    display: none;
+  }
+
+  .plan-mini {
+    height: auto;
+    aspect-ratio: auto;
+    border: 1px solid var(--linie);
+    border-radius: var(--r);
+  }
+
+  .plan-mini .pom-mini {
+    fill: var(--c);
+    opacity: 0.55;
+  }
+
+  .plan-mini .pom-mini.evidentiat {
+    opacity: 1;
+    stroke: var(--cerneala);
+    stroke-width: 2.5;
+    vector-effect: non-scaling-stroke;
+    paint-order: stroke;
+  }
+</style>

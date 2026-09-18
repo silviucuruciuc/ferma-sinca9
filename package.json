@@ -1,0 +1,31 @@
+{
+  "name": "ferma-sinca90",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "dependencies": {
+    "@fontsource-variable/archivo": "^5.3.0",
+    "@sveltia/cms": "^0.215.0",
+    "astro": "^7.3.3",
+    "js-yaml": "^5.4.2",
+    "qrcode": "^1.5.4"
+  },
+  "devDependencies": {
+    "exceljs": "^4.4.0",
+    "wrangler": "^4.134.0"
+  },
+  "scripts": {
+    "predev": "node scripts/copiaza-cms.mjs",
+    "dev": "astro dev",
+    "prebuild": "node scripts/copiaza-cms.mjs",
+    "build": "astro build",
+    "preview": "npm run build && wrangler dev",
+    "import": "node scripts/import-excel.mjs",
+    "garda": "node scripts/garda.mjs",
+    "deploy": "node scripts/garda.mjs && npm run build && wrangler deploy",
+    "prepare": "node -e \"try{require('child_process').execSync('git config core.hooksPath .githooks',{stdio:'ignore'})}catch{}\""
+  },
+  "engines": {
+    "node": ">=22.12"
+  }
+}

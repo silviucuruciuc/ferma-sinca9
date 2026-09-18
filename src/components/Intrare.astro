@@ -1,0 +1,52 @@
+---
+import { dataScurta, numar, linkCMS, STARE_SANATATE } from '../lib/date.js';
+import { specie, etichetaPom } from '../lib/specii.js';
+
+interface Props {
+  j: any;
+  arataPomi?: boolean;
+}
+const { j, arataPomi = true } = Astro.props;
+const masuri = [
+  j.inaltime_cm != null && `înălțime ${numar(j.inaltime_cm, 0)} cm`,
+  j.trunchi_mm != null && `trunchi ${numar(j.trunchi_mm, 0)} mm`,
+  j.recolta_kg != null && `recoltă ${numar(j.recolta_kg)} kg`,
+  j.produs && j.produs,
+].filter(Boolean);
+---
+
+<article class="intrare" data-tip={j.tip} id={`j-${j.id}`}>
+  <div class="intrare-data">{dataScurta(j.data)}</div>
+  <div>
+    <h3>{j.titlu}</h3>
+    <div class="intrare-meta">
+      <span class="tip">{j.tipInfo.nume}</span>
+      {j.stare_sanatate && <span class="insigna" data-stare={j.stare_sanatate === 'bun' ? 'plantat' : j.stare_sanatate === 'atentie' ? 'observatie' : 'problema'}>{STARE_SANATATE[j.stare_sanatate] ?? j.stare_sanatate}</span>}
+      {j.toata_livada && <span class="cip">toată livada</span>}
+      {j.specii.map((s: string) => <span class="cip">toți: {specie(s).nume.toLowerCase()}</span>)}
+      {arataPomi && j.pomi.map((id: string) => <a class="cip" href={`/pomi/${id}/`}>{etichetaPom(id)}</a>)}
+      {masuri.length > 0 && <span>{masuri.join(' · ')}</span>}
+      <a class="editeaza" href={linkCMS.intrare(j.id)}>editează</a>
+    </div>
+    {j.html && <div class="intrare-corp proza" set:html={j.html} />}
+    {
+      j.poze.length > 0 && (
+        <div class="poze">
+          {j.poze.map((src: string) => (
+            <a href={src}>
+              <img src={src} alt={`Poză: ${j.titlu}`} loading="lazy" decoding="async" />
+            </a>
+          ))}
+        </div>
+      )
+    }
+  </div>
+</article>
+
+<style>
+  .editeaza {
+    margin-left: auto;
+    font-size: 0.85rem;
+    color: var(--grafit);
+  }
+</style>
