@@ -345,6 +345,7 @@ img {
 
 .insigna[data-stare='comandat'] { color: var(--grafit); border-style: dashed; }
 .insigna[data-stare='plantat'] { color: var(--bine); }
+.insigna[data-stare='vechi'] { color: var(--molid); }
 .insigna[data-stare='observatie'] { color: var(--atentie); }
 .insigna[data-stare='problema'] { color: var(--alerta); }
 .insigna[data-stare='uscat'],

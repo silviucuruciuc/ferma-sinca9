@@ -48,6 +48,7 @@ export const specie = (cod) => SPECII[cod] ?? { ...SPECII.altele, nume: cod || S
 export const STARI = {
   comandat: { nume: 'Comandat' },
   plantat: { nume: 'Plantat' },
+  vechi: { nume: 'Vechi' },
   observatie: { nume: 'Sub observație' },
   problema: { nume: 'Problemă' },
   uscat: { nume: 'Uscat', istoric: true },
