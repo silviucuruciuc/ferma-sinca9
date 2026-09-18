@@ -1,18 +1,18 @@
 # Planul terenului — Ferma Șinca 9 (Șinca Nouă, jud. Brașov, ~700 m)
 #
-# CONTURUL PARCELELOR E EXACT. Punctele sunt cele din „Calculul suprafețelor” și din
-# Anexa Nr. 1 la Partea I pentru CF 105881 și CF 105882 (Șinca Nouă), proiecția Stereo 70.
-# Verificate prin recalcul din coordonate: ariile ies 1199.510 și 1000.112 mp, perimetrele
-# 151.718 și 145.596 m — identice cu actele. Documentele: `cadastru/` (ignorat de git,
-# conțin date cu caracter personal iar repo-ul e public).
+# CONTURUL E EXACT. Punctele vin din „Calculul suprafețelor” și din Anexa Nr. 1 la Partea I
+# pentru CF 105881 și CF 105882 (Șinca Nouă), proiecția Stereo 70. Verificate prin recalcul:
+# pe parcele separate ies 1199.510 și 1000.112 mp, perimetre 151.718 și 145.596 m — identice
+# cu actele. Documentele: `cadastru/` (ignorat de git; repo-ul e public).
 #
-# X = Nord, Y = Est, metri. Planul local: x = Y - origine.y (Est), y = X - origine.x (Nord).
+# Cele două parcele sunt desenate ca un singur contur — hotarul dintre ele (latura 200-201,
+# 53.733 m) nu se mai afișează. Punctele 200 și 201 rămân în contur, ca vârfuri de margine.
+#
+# X = Nord, Y = Est, metri. Plan local: x = Y - origine.y (Est), y = X - origine.x (Nord).
 # Originea e colțul de sud-vest al gabaritului (X minim = pct. 202, Y minim = pct. 206).
+# NU schimba originea după ce ai așezat pomii — pozițiile din pozitii.json sunt metri față de ea.
 #
-# NU schimba originea după ce ai așezat pomii — pozițiile din pozitii.json sunt metri
-# față de ea și s-ar deplasa toate.
-#
-# Terenul e rotit ~12.6° față de axele N/E (axa lungă 206→202 și 200→201).
+# Terenul e rotit ~12.6° față de axele N/E.
 nume: Ferma Șinca 9
 localitate: Șinca Nouă, jud. Brașov
 sistem: stereo70
@@ -20,13 +20,12 @@ origine_stereo70:
   x: 465821.361
   y: 519119.835
 parcele:
-  # Suprafețele sunt cele oficiale din CF; din coordonate ies 1199.510 / 1000.112 mp.
-  - nume: CF 105881
-    suprafata_mp: 1200
-    # Front la stradă (vest) 22.70 m · adâncime 52.32 m (sud) / 53.73 m (nord).
-    # Gard de lemn pct. 527-532, gard de plasă pct. 528-530. Folosință: 417 mp livadă + 783 arabil.
+  - nume: CF 105881 + 105882
+    suprafata_mp: 2200
+    # Front total la stradă (vest) 41.41 m · adâncime 52.32–54.31 m.
+    # Gard de lemn pct. 527-532 și 532-534, gard de plasă pct. 528-530.
+    # Folosință din acte: 788 mp livadă (417 + 371) + 1412 mp arabil (783 + 629).
     puncte: |
-      465854.264 519127.283
       465842.558 519179.725
       465821.361 519170.877
       465822.206 519167.330
@@ -35,17 +34,10 @@ parcele:
       465832.831 519119.835
       465839.147 519121.709
       465851.330 519126.142
-  - nume: CF 105882
-    suprafata_mp: 1000
-    # Front la stradă (vest) 18.71 m · adâncime 53.73 m (sud) / 54.31 m (nord).
-    # Latura 200-201 (53.733 m) e hotarul comun cu 105881.
-    # Gard de lemn pct. 532-534. Folosință: 371 mp livadă + 629 arabil.
-    puncte: |
-      465871.738 519133.964
-      465859.944 519186.982
-      465842.558 519179.725
       465854.264 519127.283
       465869.321 519133.138
+      465871.738 519133.964
+      465859.944 519186.982
 zone:
   # Strada urmărește hotarul real de vest (pct. 206-207-208-200-213-209), lățime ~7 m.
   - nume: Stradă
@@ -63,58 +55,24 @@ zone:
       465851.330 519119.142
       465839.147 519114.709
       465832.831 519112.835
-  # Desenată peste schița veche, rotită cu -12.6° ca să urmeze terenul real. Verific-o în Admin.
+  # Livada veche: bandă de la stradă, pe toată lățimea terenului, până acoperă cei
+  # 788 mp de livadă din acte (417 în 105881 + 371 în 105882). Adâncimea rezultată
+  # e 21.60 m. Calculată prin tăierea conturului cu o dreaptă
+  # paralelă cu strada, nu desenată de mână.
   - nume: Livadă
     tip: livada
-    aproximativ: true
     puncte: |
+      465828.124 519140.920
+      465828.494 519139.263
       465832.831 519119.835
-      465827.150 519145.207
-      465867.549 519154.253
-      465873.231 519128.881
-  # Desenată peste schița veche, rotită cu -12.6° ca să urmeze terenul real. Verific-o în Admin.
-  - nume: Bucătărie de vară + foișor
-    tip: constructie
-    aproximativ: true
-    puncte: |
-      465833.588 519121.029
-      465832.059 519127.860
-      465836.938 519128.953
-      465838.468 519122.122
-  # Desenată peste schița veche, rotită cu -12.6° ca să urmeze terenul real. Verific-o în Admin.
-  - nume: Barn 50
-    tip: constructie
-    aproximativ: true
-    puncte: |
-      465829.640 519147.814
-      465827.892 519155.621
-      465833.747 519156.932
-      465835.495 519149.125
-  # Desenată peste schița veche, rotită cu -12.6° ca să urmeze terenul real. Verific-o în Admin.
-  - nume: Casă (viitoare)
-    tip: constructie
-    aproximativ: true
-    puncte: |
-      465864.825 519161.841
-      465862.138 519173.844
-      465851.013 519171.353
-      465852.281 519165.693
-      465857.648 519166.895
-      465859.068 519160.552
-  # Desenată peste schița veche, rotită cu -12.6° ca să urmeze terenul real. Verific-o în Admin.
-  - nume: Grădină de legume
-    tip: gradina
-    aproximativ: true
-    puncte: |
-      465826.261 519158.330
-      465822.765 519173.943
-      465835.451 519176.784
-      465838.947 519161.170
+      465839.147 519121.709
+      465851.330 519126.142
+      465854.264 519127.283
+      465869.321 519133.138
+      465871.738 519133.964
+      465868.195 519149.892
 repere:
   # Reperele sunt MEREU în metri locali (teren.js nu le convertește).
   - nume: Poartă (pct. 200)
     x: 7.45
     y: 32.9
-  - nume: Fântână (aprox.)
-    x: 40.26
-    y: 21.93
