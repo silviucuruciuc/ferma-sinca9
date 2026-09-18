@@ -73,13 +73,13 @@ O aplicație OAuth are un singur callback: când treci pe domeniul final, actual
 
 Varianta fără OAuth: în Admin, „Sign In Using Access Token”, cu un token *fine-grained* limitat la acest repo și permisiunea *Contents: Read and write*. Nu-l lipi nicăieri altundeva.
 
-## 4. Domeniul ferma-sinca90.ro
+## 4. Domeniul ferma.sinca9.ro
 
-1. Cumperi domeniul de la un registrar .ro și adaugi site-ul în contul Cloudflare personal (planul Free); la registrar pui nameserverele primite de la Cloudflare.
+1. Cumperi **sinca9.ro** de la un registrar .ro și adaugi zona în contul Cloudflare personal (planul Free); la registrar pui nameserverele primite de la Cloudflare. `ferma` e subdomeniu — nu se cumpără separat.
 2. În `wrangler.jsonc` decomentezi `routes` (custom domain) și faci push.
-3. Actualizezi callback-ul aplicației OAuth la `https://ferma-sinca90.ro/oauth/callback`.
+3. Actualizezi callback-ul aplicației OAuth la `https://ferma.sinca9.ro/oauth/callback`.
 
-Codurile QR folosesc deja `site.url` din `ferma.config.json` (`https://ferma-sinca90.ro`). **Printează etichetele după ce domeniul răspunde** — scanează întâi una de pe ecran.
+Codurile QR folosesc deja `site.url` din `ferma.config.json` (`https://ferma.sinca9.ro`). **Printează etichetele după ce domeniul răspunde** — scanează întâi una de pe ecran.
 
 ## Folosire
 

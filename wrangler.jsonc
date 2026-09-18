@@ -20,6 +20,6 @@
     "GITHUB_SCOPE": "public_repo"
   },
   "observability": { "enabled": true }
-  // După ce adaugi ferma-sinca90.ro în contul Cloudflare personal, decomentează:
-  // ,"routes": [{ "pattern": "ferma-sinca90.ro", "custom_domain": true }]
+  // După ce adaugi zona sinca9.ro în contul Cloudflare personal, decomentează:
+  // ,"routes": [{ "pattern": "ferma.sinca9.ro", "custom_domain": true }]
 }
