@@ -72,6 +72,15 @@ const json = JSON.stringify(dateClient).replace(/</g, '\\u003c');
       </div>
       <div class="plan-scara" aria-hidden="true"><span class="scara-bara"></span><span class="scara-text">5 m</span></div>
 
+      <div class="plan-mod plan-masura" id="plan-masura" hidden>
+        <p class="mod-text">Atinge planul ca să pui capetele. Poți continua cu mai multe puncte; atingerea unui pom se prinde de el.</p>
+        <p class="mod-info" id="masura-total" aria-live="polite"></p>
+        <div class="mod-butoane">
+          <button type="button" class="buton" id="btn-masura-sterge">Șterge punctele</button>
+          <button type="button" class="buton" id="btn-masura-iesi">Ieși din măsurare</button>
+        </div>
+      </div>
+
       <div class="plan-mod" id="plan-mod" hidden>
         <p class="mod-text" id="mod-text">Trage pomii pe plan. Din listă: alege un pom, apoi atinge locul unde e plantat.</p>
         <p class="mod-info" id="mod-info" aria-live="polite"></p>
@@ -155,6 +164,7 @@ const json = JSON.stringify(dateClient).replace(/</g, '\\u003c');
 
       <div class="bloc bloc-aranjare">
         <button type="button" class="buton" id="btn-aranjeaza">Aranjează pe plan</button>
+        <button type="button" class="buton" id="btn-masoara">Măsoară distanțe</button>
         <p class="nota-tava">
           Mutările se salvează direct în repo (<code>src/data/pozitii.json</code>) și site-ul se reface singur.
         </p>
@@ -330,6 +340,10 @@ const json = JSON.stringify(dateClient).replace(/</g, '\\u003c');
 
   :global(.harta-plan.mod-aranjare) {
     cursor: grab;
+  }
+
+  :global(.harta-plan.mod-masurare) {
+    cursor: crosshair;
   }
 
   :global(.harta-plan.alege-loc) {

@@ -209,7 +209,13 @@ function porneste(DATE) {
       if (gest.mutat && gest.poz) seteazaPozitie(gest.id, gest.poz);
       selecteaza(gest.id);
     } else if (gest.tip === 'pan' && !gest.mutat) {
-      if (gest.pe) selecteaza(gest.pe);
+      if (masurare) {
+        // Dacă atingi un pom aflat pe plan, punctul se prinde exact de el.
+        const pePom = gest.pe ? pozitie(gest.pe) : null;
+        const [x, y] = pePom ? [pePom.x, pePom.y] : dinSvg(...punct(e));
+        puncteMasura.push([round2(x), round2(y), gest.pe && pePom ? pomi.get(gest.pe).eticheta : null]);
+        randeazaMasura();
+      } else if (gest.pe) selecteaza(gest.pe);
       else if (aranjare && alegere) {
         const [x, y] = aliniaza(...dinSvg(...punct(e)));
         const id = alegere;
@@ -259,7 +265,11 @@ function porneste(DATE) {
 
   addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
-    if (alegere) alegeDinTava(null);
+    if (masurare && puncteMasura.length) {
+      puncteMasura.pop();
+      randeazaMasura();
+    } else if (masurare) comutaMasurare(false);
+    else if (alegere) alegeDinTava(null);
     else deselecteaza();
   });
 
@@ -482,6 +492,65 @@ function porneste(DATE) {
     randeazaTava();
   });
 
+  // ---------------------------------------------------------------- măsurare
+  let masurare = false;
+  const puncteMasura = [];
+  const stratMasura = $('.strat-masura', svg);
+
+  function comutaMasurare(activ = !masurare) {
+    masurare = activ;
+    if (masurare && aranjare) comutaAranjare(false);
+    if (masurare) deselecteaza();
+    cutie.classList.toggle('mod-masurare', masurare);
+    $('#plan-masura').hidden = !masurare;
+    $('#btn-masoara').textContent = masurare ? 'Ieși din măsurare' : 'Măsoară distanțe';
+    if (!masurare) puncteMasura.length = 0;
+    randeazaMasura();
+  }
+
+  function randeazaMasura() {
+    stratMasura.replaceChildren();
+    if (!masurare) return;
+    const t = `scale(${k.toFixed(5)})`;
+    const sp = puncteMasura.map(([x, y]) => laSvg(x, y));
+
+    if (sp.length > 1) stratMasura.append(el('polyline', { class: 'masura-linie', points: sp.map((q) => q.join(',')).join(' ') }));
+
+    let total = 0;
+    for (let i = 1; i < puncteMasura.length; i++) {
+      const [x1, y1] = puncteMasura[i - 1];
+      const [x2, y2] = puncteMasura[i];
+      const d = Math.hypot(x2 - x1, y2 - y1);
+      total += d;
+      const [mx, my] = laSvg((x1 + x2) / 2, (y1 + y2) / 2);
+      const txt = el('text', { 'text-anchor': 'middle', y: -6 });
+      txt.textContent = `${fmt(d)} m`;
+      stratMasura.append(el('g', { class: 'masura-et', transform: `translate(${mx} ${my})` }, [el('g', { class: 's', transform: t }, [txt])]));
+    }
+
+    for (const [sx, sy] of sp) {
+      stratMasura.append(el('g', { class: 'masura-pct', transform: `translate(${sx} ${sy})` }, [el('g', { class: 's', transform: t }, [el('circle', { r: 4 })])]));
+    }
+
+    const n = puncteMasura.length;
+    const capete = puncteMasura.filter((q) => q[2]).map((q) => q[2]);
+    $('#masura-total').textContent =
+      n === 0
+        ? 'Atinge planul ca să pui primul punct.'
+        : n === 1
+          ? 'Un punct pus. Atinge încă unul.'
+          : `${fmt(total)} m` +
+            (n > 2 ? ` pe ${n - 1} segmente` : '') +
+            (capete.length ? ` · ${capete.join(' → ')}` : '');
+  }
+
+  $('#btn-masoara').addEventListener('click', () => comutaMasurare());
+  $('#btn-masura-iesi').addEventListener('click', () => comutaMasurare(false));
+  $('#btn-masura-sterge').addEventListener('click', () => {
+    puncteMasura.length = 0;
+    randeazaMasura();
+  });
+
   // ---------------------------------------------------------------- tava „Nepoziționați”
   function randeazaTava() {
     const lista = [...pomi.values()].filter((p) => !pozitie(p.id) && (arataIstoric || !p.istoric));
@@ -545,6 +614,7 @@ function porneste(DATE) {
 
   function comutaAranjare(activ = !aranjare) {
     aranjare = activ;
+    if (aranjare && masurare) comutaMasurare(false);
     cutie.classList.toggle('mod-aranjare', aranjare);
     $('#plan-mod').hidden = !aranjare;
     $('#btn-aranjeaza').textContent = aranjare ? 'Ieși din aranjare' : 'Aranjează pe plan';

@@ -87,8 +87,10 @@ zone:
       465826.394 519172.436
       465827.434 519169.944
       465824.388 519168.673
-repere:
-  # Reperele sunt MEREU în metri locali (teren.js nu le convertește).
-  - nume: Poartă (pct. 200)
-    x: 7.45
-    y: 32.9
+  # Poarta: 4 m de gard, centrată pe pct. 200. Gardul e coliniar prin 200
+  # (208-200 și 200-213 diferă cu 0.002°), deci segmentul cade exact pe hotar.
+  - nume: Poartă
+    tip: poarta
+    puncte: |
+      465852.400 519126.558
+      465856.128 519128.008

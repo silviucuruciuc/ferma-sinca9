@@ -1,5 +1,5 @@
 ---
-import { centru, arie } from '../lib/teren.js';
+import { centru } from '../lib/teren.js';
 
 interface Props {
   teren: any;
@@ -31,7 +31,6 @@ if (!mini) {
 }
 
 const pePlan = pomi.filter((p) => p.pozitie);
-const fmtArie = (a: number) => `${Math.round(a).toLocaleString('ro-RO')} m²`;
 ---
 
 <svg
@@ -90,21 +89,6 @@ const fmtArie = (a: number) => `${Math.round(a).toLocaleString('ro-RO')} m²`;
               </g>
             );
           })}
-        {teren.parcele.map((p: any) => {
-          const [cx, cy] = centru(p.puncte);
-          return (
-            <g transform={`translate(${cx.toFixed(2)} ${sy(cy)})`}>
-              <g class="s" transform={scala}>
-                <text class="text-parcela" text-anchor="middle" y="-2">
-                  {p.nume}
-                </text>
-                <text class="text-parcela-mic" text-anchor="middle" y="13">
-                  {p.suprafata_mp ? `${Number(p.suprafata_mp).toLocaleString('ro-RO')} m² (CF)` : fmtArie(Math.abs(arie(p.puncte)))}
-                </text>
-              </g>
-            </g>
-          );
-        })}
         {teren.repere.map((r: any) => (
           <g class="reper" transform={`translate(${r.x} ${sy(r.y)})`}>
             <g class="s" transform={scala}>
@@ -177,6 +161,7 @@ const fmtArie = (a: number) => `${Math.round(a).toLocaleString('ro-RO')} m²`;
       )
     }
   </g>
+  <g class="strat-masura" aria-hidden="true"></g>
   <g class="strat-ui"></g>
 </svg>
 
@@ -244,6 +229,33 @@ const fmtArie = (a: number) => `${Math.round(a).toLocaleString('ro-RO')} m²`;
     fill: rgb(58 92 163 / 0.12);
   }
 
+  .plan .zona-poarta polyline {
+    fill: none;
+    stroke: var(--eticheta);
+    stroke-width: 5;
+    stroke-linecap: round;
+  }
+
+  .plan .masura-linie {
+    fill: none;
+    stroke: #1d63b8;
+    stroke-width: 2;
+    stroke-dasharray: 6 4;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .plan .masura-pct circle {
+    fill: var(--alb);
+    stroke: #1d63b8;
+    stroke-width: 2;
+  }
+
+  .plan .masura-et text {
+    fill: #1d63b8;
+    font-weight: 700;
+    font-size: 12px;
+  }
+
   .plan text {
     fill: var(--cerneala);
     font-stretch: 75%;
@@ -262,16 +274,6 @@ const fmtArie = (a: number) => `${Math.round(a).toLocaleString('ro-RO')} m²`;
   .plan .text-drum {
     font-weight: 700;
     letter-spacing: 0.06em;
-  }
-
-  .plan .text-parcela {
-    font-weight: 780;
-    font-size: 14px;
-  }
-
-  .plan .text-parcela-mic {
-    fill: var(--grafit);
-    font-size: 11px;
   }
 
   .plan .reper path {
