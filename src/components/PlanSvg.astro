@@ -103,18 +103,44 @@ const pePlan = pomi.filter((p) => p.pozitie);
     )
   }
 
+  <g class="strat-spaliere" aria-hidden="true">
+    {
+      teren.spaliere.map((sp: any) => (
+        <g class="spalier">
+          <polyline class="spalier-sina" points={pts(sp.puncte)} />
+          {sp.puncte.map((q: number[]) => (
+            <circle class="spalier-stalp" cx={q[0]} cy={sy(q[1])} r="0.28" />
+          ))}
+        </g>
+      ))
+    }
+  </g>
+
   <g class="strat-coroane" aria-hidden="true">
     {
-      pePlan.map((p) => (
-        <circle
-          class="coroana"
-          data-id={p.id}
-          cx={p.pozitie.x}
-          cy={sy(p.pozitie.y)}
-          r={(p.coroana / 2).toFixed(2)}
-          style={`--c:${p.specieInfo.culoare}`}
-        />
-      ))
+      pePlan.map((p) =>
+        p.pozitie.ux != null ? (
+          <rect
+            class="coroana coroana-palisata"
+            data-id={p.id}
+            x={(-p.pozitie.latime / 2).toFixed(2)}
+            y={(-p.pozitie.adancime / 2).toFixed(2)}
+            width={p.pozitie.latime.toFixed(2)}
+            height={p.pozitie.adancime.toFixed(2)}
+            transform={`translate(${p.pozitie.x} ${sy(p.pozitie.y)}) rotate(${(-Math.atan2(p.pozitie.uy, p.pozitie.ux) * 180 / Math.PI).toFixed(2)})`}
+            style={`--c:${p.specieInfo.culoare}`}
+          />
+        ) : (
+          <circle
+            class="coroana"
+            data-id={p.id}
+            cx={p.pozitie.x}
+            cy={sy(p.pozitie.y)}
+            r={(p.coroana / 2).toFixed(2)}
+            style={`--c:${p.specieInfo.culoare}`}
+          />
+        ),
+      )
     }
   </g>
 
@@ -284,6 +310,22 @@ const pePlan = pomi.filter((p) => p.pozitie);
   .plan .reper path {
     stroke: var(--cerneala);
     stroke-width: 1.5;
+  }
+
+  .plan .spalier-sina {
+    fill: none;
+    stroke: var(--grafit);
+    stroke-width: 2.5;
+    vector-effect: non-scaling-stroke;
+    stroke-linecap: round;
+  }
+
+  .plan .spalier-stalp {
+    fill: var(--cerneala);
+  }
+
+  .plan .coroana-palisata {
+    rx: 0.15;
   }
 
   .plan .coroana {

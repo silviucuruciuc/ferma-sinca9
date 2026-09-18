@@ -44,7 +44,31 @@ export function normalizeazaTeren(brut = {}) {
     .map((r) => ({ ...r, x: Number(r.x), y: Number(r.y) }))
     .filter((r) => Number.isFinite(r.x) && Number.isFinite(r.y));
 
-  const pct = [...parcele, ...zone].flatMap((p) => p.puncte).concat(repere.map((r) => [r.x, r.y]));
+  // Spaliere: o linie (2+ puncte) plus lista pomilor palisați pe ea. Pozițiile lor NU se
+  // țin în pozitii.json — se calculează aici, la distanțe egale de-a lungul liniei, cu
+  // jumătate de pas la capete. Muți un capăt, se mută toți pomii.
+  const spaliere = (brut.spaliere ?? [])
+    .map((s) => {
+      const puncte = parsePuncte(s.puncte).map(conv);
+      const pomi = (Array.isArray(s.pomi) ? s.pomi : [s.pomi]).filter(Boolean).map(String);
+      return { ...s, puncte, pomi, adancime: Number(s.adancime_m) || 0.6 };
+    })
+    .filter((s) => s.puncte.length >= 2 && s.pomi.length)
+    .map((s) => {
+      const L = lungime(s.puncte);
+      const pas = L / s.pomi.length;
+      return {
+        ...s,
+        lungime: round(L),
+        pas: round(pas),
+        locuri: s.pomi.map((id, i) => {
+          const { x, y, ux, uy } = pePolilinie(s.puncte, pas * (i + 0.5));
+          return { id, x: round(x), y: round(y), ux, uy };
+        }),
+      };
+    });
+
+  const pct = [...parcele, ...zone, ...spaliere].flatMap((p) => p.puncte).concat(repere.map((r) => [r.x, r.y]));
   if (!pct.length) pct.push([0, 0], [40, 40]);
   const xs = pct.map((p) => p[0]);
   const ys = pct.map((p) => p[1]);
@@ -56,6 +80,7 @@ export function normalizeazaTeren(brut = {}) {
     sistem,
     parcele,
     zone,
+    spaliere,
     repere,
     limite,
     suprafata: parcele.reduce((s, p) => s + Math.abs(arie(p.puncte)), 0),
@@ -67,6 +92,31 @@ export const arie = (pts) =>
     const [x2, y2] = pts[(i + 1) % pts.length];
     return s + (x1 * y2 - x2 * y1);
   }, 0) / 2;
+
+/** Lungimea unei polilinii, în metri. */
+export function lungime(pts) {
+  let L = 0;
+  for (let i = 1; i < pts.length; i++) L += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]);
+  return L;
+}
+
+/** Punctul aflat la distanța `d` de-a lungul poliliniei, plus direcția locală (versor). */
+export function pePolilinie(pts, d) {
+  let ramas = Math.max(0, d);
+  for (let i = 1; i < pts.length; i++) {
+    const [x1, y1] = pts[i - 1];
+    const [x2, y2] = pts[i];
+    const L = Math.hypot(x2 - x1, y2 - y1);
+    const ultim = i === pts.length - 1;
+    if (ramas <= L || ultim) {
+      const t = L ? Math.min(ramas, L) / L : 0;
+      return { x: x1 + (x2 - x1) * t, y: y1 + (y2 - y1) * t, ux: L ? (x2 - x1) / L : 1, uy: L ? (y2 - y1) / L : 0 };
+    }
+    ramas -= L;
+  }
+  const [x, y] = pts[0] ?? [0, 0];
+  return { x, y, ux: 1, uy: 0 };
+}
 
 export function centru(pts) {
   const n = pts.length || 1;

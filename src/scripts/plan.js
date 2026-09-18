@@ -147,7 +147,10 @@ function porneste(DATE) {
       return;
     }
     const marcaj = e.target.closest('.pom');
-    if (aranjare && marcaj) {
+    if (aranjare && marcaj && pomi.get(marcaj.dataset.id)?.spalier) {
+      // Pomii palisați își iau locul din spalier — se mută mutând capătul spalierului.
+      gest = { tip: 'pan', x0: e.clientX, y0: e.clientY, vb0: { ...vb }, pe: marcaj.dataset.id, mutat: false };
+    } else if (aranjare && marcaj) {
       gest = { tip: 'trage', id: marcaj.dataset.id, x0: e.clientX, y0: e.clientY, mutat: false };
     } else {
       gest = { tip: 'pan', x0: e.clientX, y0: e.clientY, vb0: { ...vb }, pe: marcaj?.dataset.id ?? null, mutat: false };
@@ -406,6 +409,7 @@ function porneste(DATE) {
     else if (p.comanda) detalii.push(`comandă: ${p.comanda}`);
     const poz = pozitie(id);
     detalii.push(poz ? `x ${fmt(poz.x)} · y ${fmt(poz.y)} m` : 'nu e încă pe plan');
+    if (p.spalier) detalii.push(`palisat pe „${p.spalier}”`);
     st.append(document.createTextNode(detalii.join(' · ')));
 
     const lista = $('#sel-jurnal');
@@ -423,7 +427,7 @@ function porneste(DATE) {
 
     $('#sel-fisa').href = p.url;
     $('#sel-jurnal-nou').href = p.jurnalNou;
-    $('#sel-scoate').hidden = !(aranjare && poz);
+    $('#sel-scoate').hidden = !(aranjare && poz) || !!p.spalier;
     $('#selectie').hidden = false;
     const panou = $('.panou');
     if (panou && matchMedia('(min-width: 58rem)').matches) panou.scrollTo({ top: 0, behavior: reducereMiscare ? 'auto' : 'smooth' });

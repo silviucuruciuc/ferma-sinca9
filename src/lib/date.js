@@ -54,6 +54,13 @@ async function construieste() {
       .map((p) => [p.pom, { x: Number(p.x), y: Number(p.y) }]),
   );
 
+  // Pomii de pe spalier își iau poziția din structură, nu din pozitii.json — dacă apar și
+  // acolo (rămășiță de la o așezare manuală), spalierul are prioritate.
+  const peSpalier = new Map();
+  for (const s of teren.spaliere)
+    for (const l of s.locuri)
+      peSpalier.set(l.id, { x: l.x, y: l.y, spalier: s.nume, ux: l.ux, uy: l.uy, latime: s.pas, adancime: s.adancime });
+
   const jurnal = jurnalC
     .map((e) => ({
       id: e.id,
@@ -108,7 +115,8 @@ async function construieste() {
         conducere: d.conducere ?? null,
         foto: d.foto ?? null,
         note: d.note ?? null,
-        pozitie: pozitii.get(id) ?? null,
+        pozitie: peSpalier.get(id) ?? pozitii.get(id) ?? null,
+        spalier: peSpalier.get(id)?.spalier ?? null,
         jurnal: aplicabile,
         ani: rezumatPeAni(id, aplicabile),
         url: `/pomi/${id}/`,
