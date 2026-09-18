@@ -1,4 +1,4 @@
-# Ferma Șinca 90
+# Ferma Șinca 9
 
 Evidența livezii de la Șinca Nouă: planul terenului cu fiecare pom, pagina fiecărui pom (soi, portaltoi, pepinieră, plantare, jurnal pe ani) și etichete QR printabile care duc la pagina pomului.
 
