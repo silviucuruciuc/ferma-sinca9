@@ -87,6 +87,17 @@ zone:
       465826.394 519172.436
       465827.434 519169.944
       465824.388 519168.673
+  # Compost 1 x 1 m, în colțul de vest (pct. 206): 2 m de gardul de vest (206-207)
+  # și 1 m de cel de sud (206-205). Colțul are 86.1°, nu 90°, deci latura nu poate fi
+  # paralelă cu ambele garduri — pătratul e aliniat la gardul de sud, iar distanțele
+  # cerute sunt respectate ca minim (vest 2.00-3.07 m, sud 1.00-2.00 m).
+  - nume: Compost
+    tip: compost
+    puncte: |
+      465833.340 519122.144
+      465833.122 519123.120
+      465834.098 519123.338
+      465834.316 519122.362
   # Poarta: 4 m de gard, centrată pe pct. 200. Gardul e coliniar prin 200
   # (208-200 și 200-213 diferă cu 0.002°), deci segmentul cade exact pe hotar.
   - nume: Poartă
