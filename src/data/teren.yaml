@@ -1,4 +1,4 @@
-# Planul terenului — Ferma Șinca 90 (Șinca Nouă, jud. Brașov, ~700 m)
+# Planul terenului — Ferma Șinca 9 (Șinca Nouă, jud. Brașov, ~700 m)
 #
 # ATENȚIE: conturul de mai jos e o SCHIȚĂ (dreptunghiuri cu suprafețele din CF).
 # Înlocuiește-l cu punctele din planul cadastral: pune `sistem: stereo70`
@@ -6,7 +6,7 @@
 #
 # Sistemul local: metri, x crește spre EST, y crește spre NORD, originea în colțul de SUD-VEST.
 # Strada e pe latura de VEST (stânga planului). Nordul e sus.
-nume: Ferma Șinca 90
+nume: Ferma Șinca 9
 localitate: Șinca Nouă, jud. Brașov
 sistem: local
 # Folosit doar când sistem = stereo70: punctul care devine (0, 0) în sistemul local.

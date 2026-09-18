@@ -40,10 +40,10 @@ Admin local: http://localhost:4321/admin/ → „Work with Local Repository” (
    ```
 3. Creează repo-ul și urcă:
    ```bash
-   git add . && git commit -m "Ferma Șinca 90: prima versiune"
-   gh repo create <user-personal>/ferma-sinca90 --public --source . --push
+   git add . && git commit -m "Ferma Șinca 9: prima versiune"
+   gh repo create <user-personal>/ferma-sinca9 --public --source . --push
    ```
-   Hook-ul `pre-push` blochează push-ul dacă remote-ul nu e exact `<user-personal>/ferma-sinca90` sau conține „fortech” / „aiperion”.
+   Hook-ul `pre-push` blochează push-ul dacă remote-ul nu e exact `<user-personal>/ferma-sinca9` sau conține „fortech” / „aiperion”.
 
 Repo-ul public e suficient (site-ul e oricum public) și permite scope-ul minim `public_repo` la autentificare. Dacă îl faci privat, pune `"GITHUB_SCOPE": "repo"` în `wrangler.jsonc`.
 
@@ -52,7 +52,7 @@ Repo-ul public e suficient (site-ul e oricum public) și permite scope-ul minim 
 1. În dashboard-ul contului personal copiază **Account ID** în `wrangler.jsonc` la `account_id`.
 2. My Profile → API Tokens → Create Token → șablonul **Edit Cloudflare Workers**, cu *Account Resources* = doar contul personal.
 3. În repo: Settings → Secrets and variables → Actions → adaugă `CLOUDFLARE_API_TOKEN` și `CLOUDFLARE_ACCOUNT_ID`.
-4. Push pe `main` → Actions rulează garda, build-ul și `wrangler deploy`. Site-ul apare la `https://ferma-sinca90.<subdomeniu>.workers.dev`.
+4. Push pe `main` → Actions rulează garda, build-ul și `wrangler deploy`. Site-ul apare la `https://ferma-sinca9.<subdomeniu>.workers.dev`.
 
 În CI, garda oprește deploy-ul dacă workflow-ul nu rulează în contul din `ferma.config.json`, dacă ID-ul din secret diferă de cel din `wrangler.jsonc` sau dacă numele contului Cloudflare conține „fortech” / „aiperion”.
 

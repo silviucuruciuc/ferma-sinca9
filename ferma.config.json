@@ -1,12 +1,12 @@
 {
   "site": {
-    "nume": "Ferma Șinca 90",
+    "nume": "Ferma Șinca 9",
     "url": "https://ferma.sinca9.ro",
     "descriere": "Livada de la Șinca Nouă: planul terenului, fiecare pom și jurnalul lui."
   },
   "github": {
     "owner": "silviucuruciuc",
-    "repo": "ferma-sinca90",
+    "repo": "ferma-sinca9",
     "branch": "main"
   },
   "garda": {

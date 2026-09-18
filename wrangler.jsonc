@@ -1,6 +1,6 @@
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
-  "name": "ferma-sinca90",
+  "name": "ferma-sinca9",
   // ID-ul contului Cloudflare PERSONAL (dash.cloudflare.com → dreapta jos pe pagina contului: „Account ID”).
   // Deploy-ul merge doar în acest cont; scripts/garda.mjs refuză placeholderul și orice cont Fortech/Aiperion.
   "account_id": "b9a549c2bee4fe0ead467ca80707a254",
