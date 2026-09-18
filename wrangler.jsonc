@@ -3,7 +3,7 @@
   "name": "ferma-sinca90",
   // ID-ul contului Cloudflare PERSONAL (dash.cloudflare.com → dreapta jos pe pagina contului: „Account ID”).
   // Deploy-ul merge doar în acest cont; scripts/garda.mjs refuză placeholderul și orice cont Fortech/Aiperion.
-  "account_id": "COMPLETEAZA-ID-CONT-CLOUDFLARE-PERSONAL",
+  "account_id": "b9a549c2bee4fe0ead467ca80707a254",
   "main": "worker/index.js",
   "compatibility_date": "2026-08-01",
   "assets": {
