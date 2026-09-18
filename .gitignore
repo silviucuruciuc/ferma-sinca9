@@ -8,3 +8,6 @@ public/admin/sveltia-cms.js
 *.log
 .DS_Store
 public/admin/chunks/
+
+# Documente cadastrale (CF, planuri de amplasament) — NU se urcă, repo-ul e public.
+cadastru/
