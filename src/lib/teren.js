@@ -55,14 +55,30 @@ export function normalizeazaTeren(brut = {}) {
     })
     .filter((s) => s.puncte.length >= 2 && s.pomi.length)
     .map((s) => {
-      const L = lungime(s.puncte);
-      const pas = L / s.pomi.length;
+      const n = s.pomi.length;
+      const d = Number(s.distanta_m) || 0;
+      const m = Number(s.margine_m) || 0;
+      const desenata = lungime(s.puncte);
+
+      // Cu `distanta_m` dat, LUNGIMEA VINE DIN CONSTRÂNGERE: 2 x margine + (n-1) x distanță.
+      // Punctele dau doar direcția; linia se întinde sau se scurtează la lungimea cerută.
+      // Fără `distanta_m`, se împarte linia desenată în n pași egali (jumătate la capete).
+      const conditionat = d > 0;
+      const L = conditionat ? 2 * m + (n - 1) * d : desenata;
+      const puncte = conditionat ? intinde(s.puncte, L) : s.puncte;
+      const pas = conditionat ? d : L / n;
+      const prim = conditionat ? m : pas / 2;
+
       return {
         ...s,
+        puncte,
         lungime: round(L),
+        lungime_desenata: round(desenata),
         pas: round(pas),
+        margine: round(conditionat ? m : pas / 2),
+        conditionat,
         locuri: s.pomi.map((id, i) => {
-          const { x, y, ux, uy } = pePolilinie(s.puncte, pas * (i + 0.5));
+          const { x, y, ux, uy } = pePolilinie(puncte, prim + pas * i);
           return { id, x: round(x), y: round(y), ux, uy };
         }),
       };
@@ -92,6 +108,18 @@ export const arie = (pts) =>
     const [x2, y2] = pts[(i + 1) % pts.length];
     return s + (x1 * y2 - x2 * y1);
   }, 0) / 2;
+
+/** Reface polilinia la lungimea `L`, păstrând punctul de start și direcțiile. */
+export function intinde(pts, L) {
+  const L0 = lungime(pts);
+  if (!L0) return pts;
+  const k = L / L0;
+  const out = [pts[0]];
+  for (let i = 1; i < pts.length; i++) {
+    out.push([out[i - 1][0] + (pts[i][0] - pts[i - 1][0]) * k, out[i - 1][1] + (pts[i][1] - pts[i - 1][1]) * k]);
+  }
+  return out;
+}
 
 /** Lungimea unei polilinii, în metri. */
 export function lungime(pts) {

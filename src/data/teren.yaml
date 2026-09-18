@@ -37,26 +37,25 @@ parcele:
       465869.321 519133.138
       465871.738 519133.964
       465859.944 519186.982
-# Spaliere: linia plus pomii palisați pe ea. Pozițiile lor NU stau în pozitii.json —
-# se calculează la distanțe egale de-a lungul liniei, cu jumătate de pas la capete.
-# Ca să muți tot rândul, muți capetele de mai jos; pomii se reașază singuri.
-# Ca să schimbi distanța dintre pomi, schimbi lungimea liniei sau numărul de pomi.
-spaliere:
-  # 5 meri pe M26 (distanță de plantare 3,5 m) → linie de 17,5 m, orientată nord-sud
-  # pentru lumină pe ambele fețe. Așezat în afara livezii vechi, unde e liber.
-  - nume: Spalier meri (M26)
-    adancime_m: 0.6
-    puncte: |
-      465833.361 519153.835
-      465850.861 519153.835
-    pomi: [mar-14, mar-15, mar-16, mar-17, mar-18]
-  # 5 peri pe Gutui A (tot 3,5 m), paralel, la 6 m distanță pentru acces între rânduri.
-  - nume: Spalier peri (Gutui A)
-    adancime_m: 0.6
-    puncte: |
-      465833.361 519159.835
-      465850.861 519159.835
-    pomi: [par-12, par-13, par-14, par-15, par-16]
+# Spaliere (pomi palisați). Se adaugă din Admin → „Plan și poziții” → Spaliere,
+# sau aici. Lungimea rândului NU se desenează — iese din constrângere:
+#
+#     lungime = 2 x margine_m + (nr. pomi - 1) x distanta_m
+#
+# Punctele dau doar PUNCTUL DE START și DIRECȚIA; linia se întinde sau se scurtează
+# singură la lungimea rezultată. Pozițiile pomilor se calculează de aici, nu din
+# pozitii.json, și nu se pot trage cu mouse-ul — muți rândul mutând punctele.
+# Dacă lași `distanta_m` gol, se împarte linia desenată în pași egali.
+#
+# spaliere:
+#   - nume: Spalier meri (M26)
+#     pomi: [mar-14, mar-15, mar-16, mar-17, mar-18]
+#     distanta_m: 3.5      # distanța de plantare a portaltoiului
+#     margine_m: 1.5       # de la stâlpul de capăt până la primul pom
+#     adancime_m: 0.6      # cât iese coroana în lateral față de sârmă
+#     puncte: |
+#       465833.361 519153.835
+#       465850.861 519153.835
 zone:
   # Strada urmărește hotarul real de vest (pct. 206-207-208-200-213-209), lățime ~7 m.
   - nume: Stradă
