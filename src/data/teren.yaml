@@ -57,20 +57,20 @@ parcele:
 #       465833.361 519153.835
 #       465850.861 519153.835
 spaliere:
-  # Rând de la magazie spre gardul de nord, PARALEL cu gardul estic (202-201-210, care
-  # e drept pe toată lungimea: cele două segmente diferă cu 0.01°). Linia stă la 5,0 m
-  # constant de gardul estic — sub 5 m coridorul până la gardul de nord se scurtează sub
-  # cei 32,50 m necesari, pentru că terenul se îngustează spre colțul de nord-est.
-  # Primul pom cade la 2,35 m de magazie, ultimul la 2,63 m de gardul de nord.
+  # Rând de la magazie spre gardul de nord, PARALEL cu gardul estic (202-201-210, drept
+  # pe toată lungimea: segmentele diferă cu 0.01°), la 1,5 m constant de el.
+  # 9 pomi x 3,5 m + 2 x 0,5 margine = linie de 29,00 m. Capătul de sud e ancorat la 2 m
+  # de magazie; fiind mai scurt decât coridorul, capătul de nord rămâne la 5,2 m de gard.
+  # Al zecelea pom palisat (par-16) e nepoziționat — mută-l aici schimbând lista.
   # Ordinea pe rând: merii dinspre magazie, perii spre gardul de nord.
   - nume: Spalier magazie–gard nord
-    pomi: [mar-14, mar-15, mar-16, mar-17, mar-18, par-12, par-13, par-14, par-15, par-16]
+    pomi: [mar-14, mar-15, mar-16, mar-17, mar-18, par-12, par-13, par-14, par-15]
     distanta_m: 3.5
     margine_m: 0.5
     adancime_m: 0.6
     puncte: |
-      465829.052 519168.668
-      465859.043 519181.190
+      465828.623 519172.281
+      465855.384 519183.455
 zone:
   # Strada urmărește hotarul real de vest (pct. 206-207-208-200-213-209), lățime ~7 m.
   - nume: Stradă
