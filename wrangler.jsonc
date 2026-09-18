@@ -19,7 +19,7 @@
     // public_repo dacă repo-ul e public (recomandat); „repo” dacă îl faci privat.
     "GITHUB_SCOPE": "public_repo"
   },
-  "observability": { "enabled": true }
-  // După ce adaugi zona sinca9.ro în contul Cloudflare personal, decomentează:
-  // ,"routes": [{ "pattern": "ferma.sinca9.ro", "custom_domain": true }]
+  "observability": { "enabled": true },
+  // Custom domain: zona sinca9.ro e în contul Cloudflare personal.
+  "routes": [{ "pattern": "ferma.sinca9.ro", "custom_domain": true }]
 }
