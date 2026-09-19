@@ -1,0 +1,143 @@
+---
+// Patru capitole, fiecare pe o scară 1-5. E magnitudine ordinală, nu categorii:
+// deci o singură culoare pentru toate patru, nu câte una de capitol. Culorile de
+// status (alertă / atenție / bine) rămân rezervate stării pomului, nu se folosesc aici.
+// Lipsa unei note se afișează ca „necunoscut”, niciodată ca zero segmente — altfel
+// un soi nedocumentat ar arăta ca unul prost.
+interface Props {
+  evaluare?: Record<string, number | undefined>;
+  sursa?: string;
+}
+const { evaluare, sursa } = Astro.props;
+
+const CAPITOLE = [
+  { cheie: 'gust', nume: 'Gust' },
+  { cheie: 'rezistenta', nume: 'Rezistență la boli' },
+  { cheie: 'rodire', nume: 'Rodire' },
+  { cheie: 'pastrare', nume: 'Păstrare' },
+];
+const note = CAPITOLE.map((c) => {
+  const v = Number(evaluare?.[c.cheie]);
+  return { ...c, val: Number.isFinite(v) && v >= 1 && v <= 5 ? Math.round(v) : null };
+});
+const areCeva = note.some((n) => n.val !== null);
+---
+
+{
+  areCeva && (
+    <figure class="evaluare">
+      <figcaption>
+        Cum stă la capitole
+        <span class="sursa">
+          citire proprie a descrierii{sursa ? ` de la ${sursa}` : ' pepinierei'}
+        </span>
+      </figcaption>
+      <dl>
+        {note.map((n) => (
+          <div class="rand">
+            <dt>{n.nume}</dt>
+            <dd>
+              {n.val === null ? (
+                <span class="necunoscut">necunoscut</span>
+              ) : (
+                <>
+                  <span class="metru" role="img" aria-label={`${n.val} din 5`}>
+                    {[1, 2, 3, 4, 5].map((i) => (
+                      <span class:list={['seg', { plin: i <= n.val! }]} />
+                    ))}
+                  </span>
+                  <span class="cifra">{n.val}/5</span>
+                </>
+              )}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </figure>
+  )
+}
+
+<style>
+  .evaluare {
+    margin: 0 0 1.1rem;
+    max-width: 30rem;
+  }
+
+  figcaption {
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-stretch: 80%;
+    color: var(--grafit);
+    margin-bottom: 0.5rem;
+  }
+
+  .sursa {
+    display: block;
+    font-weight: 400;
+    font-size: 0.78rem;
+    color: var(--grafit);
+    opacity: 0.85;
+  }
+
+  dl {
+    margin: 0;
+    display: grid;
+    gap: 0.35rem;
+  }
+
+  .rand {
+    display: grid;
+    grid-template-columns: minmax(7rem, 9rem) 1fr;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  dt {
+    font-size: 0.9rem;
+    font-stretch: 80%;
+    color: var(--cerneala);
+  }
+
+  dd {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  /* Un singur ton pentru toate capitolele: scara e de mărime, nu de identitate. */
+  .metru {
+    display: inline-flex;
+    gap: 2px;
+  }
+
+  .seg {
+    width: 1.15rem;
+    height: 0.62rem;
+    border-radius: 2px;
+    background: var(--linie-2);
+  }
+
+  .seg.plin {
+    background: var(--molid);
+  }
+
+  .cifra {
+    font-size: 0.82rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--grafit);
+  }
+
+  .necunoscut {
+    font-size: 0.85rem;
+    color: var(--grafit);
+    font-style: italic;
+  }
+
+  @media (max-width: 30rem) {
+    .rand {
+      grid-template-columns: 1fr;
+      gap: 0.15rem;
+    }
+  }
+</style>

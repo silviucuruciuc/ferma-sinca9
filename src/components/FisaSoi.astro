@@ -1,6 +1,7 @@
 ---
 import { POLENIZARE, specie } from '../lib/specii.js';
 import { cautaLaPepiniera, linkCMS } from '../lib/date.js';
+import Evaluare from './Evaluare.astro';
 
 interface Props {
   soi: any;
@@ -15,6 +16,7 @@ const prezenti = new Set(polenizatoriPrezenti.map((p) => p.soiNume));
   {titlu && <h2>Soiul {soi.nume}</h2>}
   {soi.de_verificat && <p class="de-verificat"><strong>De verificat:</strong> {soi.de_verificat}</p>}
   {soi.rezumat && <p class="proza">{soi.rezumat}</p>}
+  <Evaluare evaluare={soi.evaluare} sursa={soi.sursa} />
   <dl class="fisa">
     <dt>Specie</dt>
     <dd>{specie(soi.specie).nume}</dd>
@@ -52,7 +54,12 @@ const prezenti = new Set(polenizatoriPrezenti.map((p) => p.soiNume));
         </>
       )
     }
-    {soi.rezistenta && (<><dt>Rezistență</dt><dd>{soi.rezistenta}</dd></>)}
+    {soi.recoltare && (<><dt>Recoltare</dt><dd>{soi.recoltare}</dd></>)}
+    {soi.pastrare && (<><dt>Păstrare</dt><dd>{soi.pastrare}</dd></>)}
+    {soi.gust && (<><dt>Gust</dt><dd>{soi.gust}</dd></>)}
+    {soi.rezistenta && (<><dt>Rezistență la boli</dt><dd>{soi.rezistenta}</dd></>)}
+    {soi.rodire && (<><dt>Rodire</dt><dd>{soi.rodire}</dd></>)}
+    {soi.origine && (<><dt>Origine</dt><dd>{soi.origine}</dd></>)}
     {soi.note && (<><dt>Notele tale (700 m)</dt><dd>{soi.note}</dd></>)}
   </dl>
   <p class="linkuri">

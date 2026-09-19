@@ -48,6 +48,17 @@ const soiuri = defineCollection({
       polenizare: text,
       polenizatori: lista,
       rezistenta: text,
+      origine: text,
+      rodire: text,
+      recoltare: text,
+      pastrare: text,
+      gust: text,
+      sursa: text,
+      // Citire proprie a descrierii pepinierei, 1-5. Lipsă = necunoscut, NU „slab”.
+      evaluare: z
+        .object({ gust: numar, rezistenta: numar, rodire: numar, pastrare: numar })
+        .partial()
+        .optional(),
       note: text,
       rezumat: text,
       pepiniera_url: text,
