@@ -39,6 +39,7 @@ export const SPECII = {
   calin: { nume: 'Călin', latin: 'Viburnum opulus', grupa: 'ornamentale', culoare: '#6F6AAE' },
   iasomie: { nume: 'Iasomie', latin: 'Philadelphus coronarius', grupa: 'ornamentale', culoare: '#8B80B5' },
   liliac: { nume: 'Liliac', latin: 'Syringa vulgaris', grupa: 'ornamentale', culoare: '#9A68B3' },
+  magnolie: { nume: 'Magnolie', latin: 'Magnolia', grupa: 'ornamentale', culoare: '#B05C8E' },
   altele: { nume: 'Altă specie', latin: '', grupa: 'exotice', culoare: '#6B716E' },
 };
 
