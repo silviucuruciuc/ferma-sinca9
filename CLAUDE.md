@@ -3,6 +3,12 @@
 `README.md` explică proiectul pentru om. Fișierul ăsta ține minte ce nu se vede din cod:
 capcanele în care s-a intrat deja, deciziile luate și motivul lor, și ce a rămas de făcut.
 
+> **Verifică întâi `git status`.** La închiderea sesiunii din 20 sep, `src/data/pozitii.json`
+> avea modificări **necommitate**: cei 3 pomi noi puși pe plan (`cais-03`, `nectarin-02`,
+> `piersic-01`), 7 scoși de pe plan (`afin-01`, `agris-01`, `amelanchier-01`, `mar-03`,
+> `mosmon-01`, `par-10`, `par-16`) și 2 mutați ușor (`mar-24`, `visin-03`). Dacă sunt încă
+> acolo, întreabă înainte să le commiți — scoaterea celor 7 poate fi intenționată sau nu.
+
 ## Unde e ce
 
 | | |
@@ -49,6 +55,12 @@ curl -sS https://ferma.sinca9.ro/ | grep -o 'class="pom"' | wc -l
 
 Când se repară token-ul, pipeline-ul devine verde și atunci roșul redevine semnal real.
 
+**Un token per proiect.** Pe 18 sep a fost creat/rotit token-ul Cloudflare pentru ferma, iar
+pe 20 sep blogul mamei (`~/blog-mama`, Cloudflare Pages) a început să pice cu același `9109`,
+la două zile după. Rotirea unui token partajat rupe tăcut celelalte proiecte, iar simptomul
+apare abia la următorul deploy. Blogul are acum token propriu; ferma încă nu și-l are reparat.
+Notă: Pages cere `Cloudflare Pages: Edit`, altă permisiune decât Workers.
+
 Garda (`scripts/garda.mjs`) verifică numele contului Cloudflare prin API doar dacă token-ul
 are și **Account Settings: Read**. Fără ea scrie „Numele contului nu poate fi citit" și trece
 mai departe — un avertisment, nu o eroare. Contul corect e cel personal, pe gmail.
@@ -82,6 +94,14 @@ linia desenată în pași egali).
 `teren.yaml` și lista `options` din `src/pages/admin/config.yml.ts`. S-a introdus deja un bug
 aici — `poarta` și `compost` lipseau din Admin, iar o editare de zonă le-ar fi pierdut.
 
+**Un pom nou aduce uneori o specie nouă.** `magnolie` a fost adăugată în `specii.js` pentru
+Magnolia Susan; `piersic` era definit de mult, dar fără niciun pom. Înainte să creezi un pom,
+verifică dacă specia există — altfel pică la validare.
+
+**YAML: `note:` cu două puncte în text trebuie ghilimetat.** `note: Exista pe teren. De
+completat: portaltoiul` pică build-ul cu „bad indentation of a mapping entry", pentru că „: "
+deschide o mapare. Pune ghilimele.
+
 **Coroanele pomilor vechi sunt estimate, nu măsurate** (6 m la meri și păr, 4,5 m la pruni).
 De aici vin cele ~9 avertismente de suprapunere din plan. Toate implică cel puțin un pom
 vechi. Nu sunt o problemă de așezare — dispar când se măsoară pe teren.
@@ -109,16 +129,20 @@ Nu sări peste astea, fiecare a prins ceva în sesiunea trecută:
 
 1. **Token Cloudflare**: adaugă `Zone → Workers Routes: Read` (și `Account Settings: Read`
    pentru verificarea de cont din gardă). Până atunci pipeline-ul e roșu permanent.
-2. **Fișele de soi** — cel mai mare rest. Sunt 82 de soiuri; 5 au date complete. Cartografierea
-   pe surse, dedusă din starea pomilor:
+2. **Fișele de soi** — cel mai mare rest. Sunt 87 de soiuri; 10 au date complete.
+   Cartografierea pe surse, dedusă din starea pomilor:
 
    | sursă | soiuri | gata |
    |---|---|---|
-   | Pepinierele Roman (comandați) | 46 | 5 |
+   | Pepinierele Roman (comandați) | 46 | 4 |
    | Sweet Garden (arbuști, ornamentali, exotice) | 18 | 0 |
-   | Yurta (pomii plantați) | 8 | 1 |
+   | Yurta (pomii plantați) | 13 | 6 |
    | fără sursă — pomii vechi | 8 | — |
    | fără sursă — `mar-din-samanta`, `nectarin-necunoscut` | 2 | — |
+
+   Paginile Yurta dau uneori **403** la citire automată; atunci ia datele din mai multe
+   pepiniere românești care spun același lucru și treci asta ca sursă. Verifică specia înainte
+   de orice: „Harco" e nectarin, „Harcot" e cais — nume aproape identice, specii diferite.
 
    Câmpurile de completat: `origine`, `rezistenta`, `rodire`, `recoltare`, `pastrare`, `gust`,
    `sursa`, plus `evaluare` (note 1-5). **Nu inventa nimic**: notele sunt citirea descrierii
@@ -126,10 +150,10 @@ Nu sări peste astea, fiecare a prins ceva în sesiunea trecută:
    rămân goi — sunt pomi vechi cu soiuri necunoscute.
 3. **Măsoară coroanele pomilor vechi** și înlocuiește estimările; avertismentele de
    suprapunere dispar atunci.
-4. **Toți cei 86 de pomi sunt pe plan.** 50 au fost așezați automat, cu poziție-țintă după
-   talie (coroană mare spre gardul de nord, coroană mică spre sud, la soare). E un punct de
-   plecare, nu o sentință — se pot trage oricând din „Aranjează pe plan". `par-16` a ieșit de
-   pe spalier când rândul a scăzut la 9 pomi și a fost apoi așezat în afara lui.
+4. **Pozițiile pe plan.** Sunt 91 de pomi. 50 au fost așezați automat, cu poziție-țintă după
+   talie (coroană mare spre gardul de nord, coroană mică spre sud, la soare) — un punct de
+   plecare, nu o sentință. La ultima verificare 9 erau nepoziționați, dar vezi avertismentul
+   de la începutul fișierului: fișierul de poziții avea modificări necommitate.
 5. **OAuth pentru Admin** nu e pus: `GITHUB_CLIENT_ID` e gol în `wrangler.jsonc`. Callback-ul
    trebuie să fie `https://ferma.sinca9.ro/oauth/callback`. Până atunci, intrarea în Admin se
    face cu „Sign In Using Access Token".
