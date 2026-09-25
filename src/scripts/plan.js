@@ -645,7 +645,11 @@ function porneste(DATE) {
       if (poz) m.set(id, { pom: id, x: poz.x, y: poz.y });
       else m.delete(id);
     }
-    const pozitii = [...m.values()].sort((a, b) => a.pom.localeCompare(b.pom, 'ro', { numeric: true }));
+    // Pomii palisați au pe plan poziția calculată de spalier; dacă ar ajunge în fișier, ar
+    // reapărea tăcut pe vechiul loc în ziua în care spalierul se golește.
+    const pozitii = [...m.values()]
+      .filter((p) => !pomi.get(p.pom)?.spalier)
+      .sort((a, b) => a.pom.localeCompare(b.pom, 'ro', { numeric: true }));
     return JSON.stringify({ pozitii }, null, 2) + '\n';
   }
 
