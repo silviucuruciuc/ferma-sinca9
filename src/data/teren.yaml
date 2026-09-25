@@ -132,13 +132,15 @@ zone:
       465833.122 519123.120
       465834.098 519123.338
       465834.316 519122.362
-  # Poarta: 4 m de gard, centrată pe pct. 200. Gardul e coliniar prin 200
-  # (208-200 și 200-213 diferă cu 0.002°), deci segmentul cade exact pe hotar.
+  # Poarta: 4 m de gard pe latura 200-213, între cei doi liliaci (liliac-01, liliac-02) —
+  # centrul e mijlocul proiecțiilor lor pe gard, la 5.43 m după pct. 200 spre 213.
+  # Prima variantă o centra pe pct. 200, cu ~5 m prea la sud. Accesul (pietonal și auto)
+  # intră de aici perpendicular pe gard.
   - nume: Poartă
     tip: poarta
     puncte: |
-      465852.400 519126.558
-      465856.128 519128.008
+      465857.460 519128.526
+      465861.188 519129.976
   # Apă rețea 1 x 1 m, în colțul nordic de la stradă (pct. 209), la 0.5 m de gardul de la
   # stradă (213-209) și de cel nordic (209-210). Colțul are 96.3°, nu 90°, deci pătratul e
   # aliniat la gardul de la stradă (0.50 m exact); față de gardul nordic 0.50 m e minimul
