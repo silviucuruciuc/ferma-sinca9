@@ -102,7 +102,8 @@ jobs:
           fi
           [ -s .asistent/commit.txt ] || echo "Modificare cerută din chat (issue #$NR)" > .asistent/commit.txt
           printf '\n\nCerut în conversația #%s.\n\nCo-Authored-By: Claude <noreply@anthropic.com>\n' "$NR" >> .asistent/commit.txt
-          git add -A -- . ':!.asistent'
+          # .asistent/ e în .gitignore; o excludere explicită a lui face git add să eșueze.
+          git add -A
           git commit -q -F .asistent/commit.txt
           git pull -q --rebase origin main
           git push -q origin HEAD:main
