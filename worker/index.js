@@ -1,12 +1,15 @@
 // Worker-ul site-ului: servește fișierele statice și face autentificarea GitHub pentru Sveltia CMS.
 // Protocolul e cel din Decap/Netlify CMS: popup -> /oauth/auth -> GitHub -> /oauth/callback -> postMessage.
 // Secrete (wrangler secret put): GITHUB_CLIENT_SECRET. Variabile (wrangler.jsonc): GITHUB_CLIENT_ID, GITHUB_SCOPE.
+// /api/asistent/* — chat-ul care cere modificări agentului (vezi asistent.js).
+import { asistent } from './asistent.js';
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (url.pathname === '/oauth/auth') return autentificare(url, env);
     if (url.pathname === '/oauth/callback') return intoarcere(request, url, env);
+    if (url.pathname.startsWith('/api/asistent')) return asistent(request, url, env);
     return env.ASSETS.fetch(request);
   },
 };

@@ -11,3 +11,6 @@ public/admin/chunks/
 
 # Documente cadastrale (CF, planuri de amplasament) — NU se urcă, repo-ul e public.
 cadastru/
+
+# Fișierele de lucru ale asistentului din GitHub Actions (conversația, răspunsul).
+.asistent/

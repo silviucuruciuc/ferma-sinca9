@@ -121,6 +121,22 @@ Poziția porții a fost corectată **separat**, înainte, ca revertul să n-o mu
   dacă un racord îl traversează. Adâncimea lui (15 m) e presupusă.
 - Partea cu ESP32 ↔ site (`/api/irigatii/*` în worker, D1) e doar descrisă pe pagină, nu scrisă.
 
+## Asistentul (/asistent/) — chat care modifică site-ul
+
+Pagina `/asistent/` → `worker/asistent.js` → un issue GitHub cu eticheta `asistent` per
+conversație → `.github/workflows/asistent.yml` rulează Claude Code, care modifică și verifică
+build-ul → workflow-ul face commit **direct pe main** (decizia lui Silviu, fără PR) și
+pornește deploy-ul cu `gh workflow run`, pentru că push-urile cu `GITHUB_TOKEN` nu declanșează
+alte workflow-uri.
+
+- **Securitatea stă în trei locuri, nu scoate niciunul:** Cloudflare Access pe `/asistent*` și
+  `/api/asistent*`; worker-ul verifică el însuși JWT-ul Access (fără `ACCESS_*` și
+  `ASISTENT_EMAIL` refuză tot, cu 503); workflow-ul rulează doar pentru mesajele
+  proprietarului pe issue-uri etichetate. Repo-ul e public — oricine poate comenta.
+- Agentul **nu** face commit; workflow-ul refuză push-ul dacă sunt atinse `.github/`,
+  `worker/`, `wrangler.jsonc`, `ferma.config.json`, `scripts/garda.mjs`, `cadastru/`.
+- Rulează pe abonamentul Claude al lui Silviu (secretul `CLAUDE_CODE_OAUTH_TOKEN`).
+
 ## Obiceiuri de verificare care au prins erori reale
 
 Nu sări peste astea, fiecare a prins ceva în sesiunea trecută:

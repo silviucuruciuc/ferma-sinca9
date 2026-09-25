@@ -1,0 +1,132 @@
+name: Asistent
+
+# Chat-ul de pe /asistent/ scrie cererile ca issue-uri cu eticheta „asistent” (un issue = o
+# conversație, un comentariu = un mesaj). Aici Claude Code citește conversația, face
+# modificarea, verifică build-ul și răspunde; commit-ul și push-ul pe main le face workflow-ul,
+# nu agentul, ca să poată refuza fișierele protejate.
+
+on:
+  issues:
+    types: [opened]
+  issue_comment:
+    types: [created]
+
+# Câte o cerere odată: două rulări în paralel ar face push peste aceleași fișiere.
+concurrency:
+  group: asistent
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+  actions: write
+  id-token: write
+
+jobs:
+  asistent:
+    # Repo-ul e public: oricine poate comenta. Rulează doar pe issue-urile „asistent” și doar
+    # pentru mesajele proprietarului (worker-ul postează cu token-ul lui). Răspunsurile
+    # agentului vin de la github-actions și nu pornesc alt workflow, deci nu există buclă.
+    if: >-
+      contains(github.event.issue.labels.*.name, 'asistent') &&
+      !github.event.issue.pull_request &&
+      github.actor == github.repository_owner
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      NR: ${{ github.event.issue.number }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      - name: Conversația
+        run: |
+          mkdir -p .asistent
+          gh issue view "$NR" --json title,body,comments --jq '
+            "# " + .title + "\n\n## Silviu\n\n" + .body + "\n\n" +
+            ([.comments[] | "## " + (if .author.login == "github-actions" then "Asistent" else "Silviu" end) + "\n\n" + .body] | join("\n\n"))
+          ' > .asistent/conversatie.md
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          claude_args: >-
+            --max-turns 80
+            --allowedTools "Read,Write,Edit,Glob,Grep,WebSearch,WebFetch,Bash(npm run build),Bash(git status),Bash(git diff:*),Bash(git log:*),Bash(ls:*),Bash(node scripts/garda.mjs)"
+          prompt: |
+            Ești asistentul site-ului Ferma Șinca 9 și lucrezi pentru Silviu, proprietarul lui.
+            Conversația cu el e în `.asistent/conversatie.md`. Răspunde la ULTIMUL lui mesaj;
+            mesajele de dinainte sunt context.
+
+            Înainte de orice, citește `CLAUDE.md` și respectă-l: capcanele, convențiile, regula
+            „nu inventa date horticole”, obiceiurile de verificare.
+
+            Dacă cererea e clară, fă modificarea în fișierele repo-ului, apoi rulează
+            `npm run build` și asigură-te că trece. Verifică rezultatul concret (fișierele din
+            `dist/`), nu doar că build-ul nu crapă.
+
+            Dacă cererea e neclară, ar șterge mult, ar schimba `origine_stereo70` sau atinge ceva
+            ireversibil, NU modifica nimic: pune întrebarea în răspuns.
+
+            Nu modifica niciodată `.github/`, `worker/`, `wrangler.jsonc`, `ferma.config.json`,
+            `scripts/garda.mjs` sau `cadastru/`. Workflow-ul refuză push-ul dacă sunt atinse.
+
+            Nu face commit și nu face push; le face workflow-ul după tine. Scrie doar:
+            1. `.asistent/raspuns.md` — răspunsul pentru Silviu, în română, scurt: ce ai
+               schimbat, ce ai verificat, ce a rămas sau ce întrebi. Fără titluri mari.
+            2. `.asistent/commit.txt` — DOAR dacă ai modificat fișiere: mesajul de commit după
+               convențiile din CLAUDE.md (titlu scurt, apoi de ce), în română.
+
+      - name: Commit și push pe main
+        id: push
+        run: |
+          set -e
+          git config user.name "Asistent ferma"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -z "$(git status --porcelain -- . ':!.asistent')" ]; then
+            echo "nimic de publicat"; exit 0
+          fi
+          protejate=$(git status --porcelain -- . ':!.asistent' | awk '{print $NF}' \
+            | grep -E '^(\.github/|worker/|wrangler\.jsonc|ferma\.config\.json|scripts/garda\.mjs|cadastru/)' || true)
+          if [ -n "$protejate" ]; then
+            printf '%s\n' "$protejate" > .asistent/protejate.txt
+            echo "fisiere protejate atinse"; exit 0
+          fi
+          [ -s .asistent/commit.txt ] || echo "Modificare cerută din chat (issue #$NR)" > .asistent/commit.txt
+          printf '\n\nCerut în conversația #%s.\n\nCo-Authored-By: Claude <noreply@anthropic.com>\n' "$NR" >> .asistent/commit.txt
+          git add -A -- . ':!.asistent'
+          git commit -q -F .asistent/commit.txt
+          git pull -q --rebase origin main
+          git push -q origin HEAD:main
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          # Push-urile cu GITHUB_TOKEN nu pornesc alte workflow-uri; deploy-ul se cere explicit.
+          gh workflow run deploy.yml --ref main
+
+      - name: Răspuns în conversație
+        if: always()
+        run: |
+          {
+            if [ -s .asistent/raspuns.md ]; then cat .asistent/raspuns.md; else echo "Nu am reușit să duc cererea la capăt."; fi
+            echo
+            if [ -s .asistent/protejate.txt ]; then
+              echo
+              echo "⚠️ Nu am publicat nimic: modificarea atingea fișiere protejate:"
+              sed 's/^/- `/; s/$/`/' .asistent/protejate.txt
+            elif [ -n "${{ steps.push.outputs.sha }}" ]; then
+              echo
+              echo "Publicat în commit ${{ steps.push.outputs.sha }}; site-ul se actualizează în 1–2 minute."
+            fi
+            if [ "${{ job.status }}" != "success" ]; then
+              echo
+              echo "Rularea a eșuat: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            fi
+          } > .asistent/comentariu.md
+          gh issue comment "$NR" --body-file .asistent/comentariu.md

@@ -1,0 +1,282 @@
+---
+import Baza from '../layouts/Baza.astro';
+import config from '../../ferma.config.json';
+
+const { owner, repo } = config.github;
+---
+
+<Baza titlu="Asistent" sectiune="asistent" descriere="Cere modificări pe site; asistentul le face și le publică.">
+  <main class="pagina asistent">
+    <h1>Asistent</h1>
+    <p class="subtitlu">
+      Scrie ce vrei schimbat pe site — un pom nou, o poziție, o fișă de soi. Asistentul face modificarea, verifică
+      build-ul și o publică direct. Un răspuns durează 1–3 minute. Fiecare conversație e un
+      <a href={`https://github.com/${owner}/${repo}/issues?q=label%3Aasistent`}>issue pe GitHub</a>, cu tot istoricul.
+    </p>
+
+    <div class="cadru">
+      <aside class="lista" aria-label="Conversații">
+        <button type="button" class="buton galben" id="noua">Conversație nouă</button>
+        <ul id="conversatii"></ul>
+      </aside>
+
+      <section class="fir" aria-live="polite">
+        <header class="fir-cap">
+          <h2 id="titlu">Conversație nouă</h2>
+          <a id="pe-github" hidden>pe GitHub</a>
+        </header>
+        <div id="mesaje" class="mesaje">
+          <p class="gol">Scrie prima cerere mai jos. Fii concret: „adaugă un cais Harcot plantat, de la Yurta” merge mai bine decât „mai pune un pom”.</p>
+        </div>
+        <p id="stare" class="stare" hidden></p>
+        <form id="formular" class="formular">
+          <label for="text" class="ascuns">Mesaj</label>
+          <textarea id="text" rows="3" placeholder="Ce vrei să schimb?" required></textarea>
+          <button type="submit" class="buton galben" id="trimite">Trimite</button>
+        </form>
+        <p class="nota">Enter trimite, Shift+Enter rând nou.</p>
+      </section>
+    </div>
+  </main>
+</Baza>
+
+<script>
+  const $ = <T extends HTMLElement>(s: string) => document.querySelector(s) as T;
+  const lista = $('#conversatii');
+  const mesaje = $('#mesaje');
+  const stare = $('#stare');
+  const titlu = $('#titlu');
+  const peGithub = $<HTMLAnchorElement>('#pe-github');
+  const text = $<HTMLTextAreaElement>('#text');
+  const trimite = $<HTMLButtonElement>('#trimite');
+  let curenta: number | null = null;
+  let ceas: number | undefined;
+
+  async function api(cale: string, init: RequestInit = {}) {
+    const r = await fetch(`/api/asistent/${cale}`, {
+      ...init,
+      headers: { ...(init.body ? { 'Content-Type': 'application/json', 'X-Asistent': '1' } : {}) },
+    });
+    const d = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(d.eroare ?? `Eroare ${r.status}`);
+    return d;
+  }
+
+  const data = new Intl.DateTimeFormat('ro-RO', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+
+  // Text sigur: escapăm tot, apoi refacem doar legăturile, `cod` și **îngroșat**.
+  function formateaza(t: string) {
+    const e = t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return e
+      .replace(/`([^`\n]+)`/g, '<code>$1</code>')
+      .replace(/\*\*([^*\n]+)\*\*/g, '<b>$1</b>')
+      .replace(/(https:\/\/[^\s<)]+)/g, '<a href="$1" rel="noopener">$1</a>');
+  }
+
+  function arata(msg: string, eroare = false) {
+    stare.hidden = !msg;
+    stare.textContent = msg;
+    stare.classList.toggle('eroare', eroare);
+  }
+
+  async function incarcaLista() {
+    try {
+      const c = await api('conversatii');
+      lista.innerHTML = '';
+      for (const x of c) {
+        const li = document.createElement('li');
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.textContent = x.titlu;
+        b.setAttribute('aria-current', String(x.nr === curenta));
+        b.addEventListener('click', () => deschide(x.nr));
+        li.append(b);
+        lista.append(li);
+      }
+    } catch (e) {
+      arata((e as Error).message, true);
+    }
+  }
+
+  async function deschide(nr: number | null) {
+    clearTimeout(ceas);
+    curenta = nr;
+    arata('');
+    if (nr == null) {
+      titlu.textContent = 'Conversație nouă';
+      peGithub.hidden = true;
+      mesaje.innerHTML = '<p class="gol">Scrie prima cerere mai jos.</p>';
+      incarcaLista();
+      text.focus();
+      return;
+    }
+    try {
+      const c = await api(`conversatii/${nr}`);
+      if (curenta !== nr) return;
+      titlu.textContent = c.titlu;
+      peGithub.href = c.url;
+      peGithub.hidden = false;
+      mesaje.innerHTML = '';
+      for (const m of c.mesaje) {
+        const d = document.createElement('article');
+        d.className = `mesaj ${m.autor}`;
+        d.innerHTML = `<p class="cine">${m.autor === 'eu' ? 'Tu' : 'Asistent'} · ${data.format(new Date(m.data))}</p><div class="corp">${formateaza(m.text)}</div>`;
+        mesaje.append(d);
+      }
+      mesaje.scrollTop = mesaje.scrollHeight;
+      if (c.lucreaza) {
+        arata('Asistentul lucrează… (1–3 minute). Pagina se actualizează singură.');
+        ceas = window.setTimeout(() => deschide(nr), 10000);
+      }
+    } catch (e) {
+      arata((e as Error).message, true);
+    }
+  }
+
+  $('#formular').addEventListener('submit', async (ev) => {
+    ev.preventDefault();
+    const t = text.value.trim();
+    if (!t) return;
+    trimite.disabled = true;
+    try {
+      if (curenta == null) {
+        const { nr } = await api('conversatii', { method: 'POST', body: JSON.stringify({ text: t }) });
+        curenta = nr;
+      } else {
+        await api(`conversatii/${curenta}`, { method: 'POST', body: JSON.stringify({ text: t }) });
+      }
+      text.value = '';
+      await deschide(curenta);
+      incarcaLista();
+    } catch (e) {
+      arata((e as Error).message, true);
+    } finally {
+      trimite.disabled = false;
+    }
+  });
+
+  text.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      $<HTMLFormElement>('#formular').requestSubmit();
+    }
+  });
+  $('#noua').addEventListener('click', () => deschide(null));
+
+  incarcaLista();
+</script>
+
+<style>
+  .cadru {
+    display: grid;
+    grid-template-columns: minmax(12rem, 16rem) 1fr;
+    gap: 1.25rem;
+    margin-top: 1.25rem;
+  }
+  @media (max-width: 720px) {
+    .cadru {
+      grid-template-columns: 1fr;
+    }
+  }
+  .lista ul {
+    list-style: none;
+    padding: 0;
+    margin: 0.75rem 0 0;
+  }
+  .lista li button {
+    width: 100%;
+    text-align: left;
+    padding: 0.5rem 0.6rem;
+    border: 0;
+    border-bottom: 1px solid var(--linie-2);
+    background: transparent;
+    font: inherit;
+    font-size: 0.92rem;
+    cursor: pointer;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .lista li button:hover,
+  .lista li button[aria-current='true'] {
+    background: var(--alb);
+  }
+  .fir {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+  .fir-cap {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .fir-cap h2 {
+    margin: 0;
+    font-size: 1.15rem;
+    overflow-wrap: anywhere;
+  }
+  .mesaje {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 60vh;
+    overflow-y: auto;
+    padding: 0.75rem 0;
+  }
+  .mesaj {
+    max-width: 44rem;
+    padding: 0.6rem 0.85rem;
+    border-radius: var(--r);
+    background: var(--alb);
+    border: 1px solid var(--linie-2);
+  }
+  .mesaj.eu {
+    align-self: flex-end;
+    background: var(--hartie-2);
+  }
+  .mesaj .cine {
+    margin: 0 0 0.25rem;
+    font-size: 0.8rem;
+    color: var(--grafit);
+  }
+  .mesaj .corp {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .stare {
+    color: var(--grafit);
+    font-size: 0.92rem;
+  }
+  .stare.eroare {
+    color: var(--cerneala);
+    font-weight: 650;
+  }
+  .formular {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-end;
+  }
+  .formular textarea {
+    flex: 1;
+    min-width: 0;
+    padding: 0.6rem;
+    border: 1.5px solid var(--linie);
+    border-radius: var(--r);
+    font: inherit;
+    background: var(--alb);
+    resize: vertical;
+  }
+  .nota {
+    font-size: 0.8rem;
+    color: var(--grafit);
+  }
+  .ascuns {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+</style>

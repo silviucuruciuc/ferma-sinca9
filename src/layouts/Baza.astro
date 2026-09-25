@@ -5,7 +5,7 @@ import config from '../../ferma.config.json';
 interface Props {
   titlu?: string;
   descriere?: string;
-  sectiune?: 'plan' | 'pomi' | 'jurnal' | 'etichete' | '';
+  sectiune?: 'plan' | 'pomi' | 'jurnal' | 'etichete' | 'asistent' | '';
   plin?: boolean;
 }
 
@@ -19,6 +19,7 @@ const nav = [
   { href: '/pomi/', eticheta: 'Pomi', cheie: 'pomi' },
   { href: '/jurnal/', eticheta: 'Jurnal', cheie: 'jurnal' },
   { href: '/etichete/', eticheta: 'Etichete QR', scurt: 'QR', cheie: 'etichete' },
+  { href: '/asistent/', eticheta: 'Asistent', cheie: 'asistent' },
   { href: '/admin/', eticheta: 'Admin', cheie: 'admin' },
 ];
 ---
