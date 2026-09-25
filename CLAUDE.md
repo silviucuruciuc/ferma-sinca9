@@ -138,7 +138,7 @@ Nu sări peste astea, fiecare a prins ceva în sesiunea trecută:
    | Sweet Garden (arbuști, ornamentali, exotice) | 18 | 0 |
    | Yurta (pomii plantați) | 13 | 6 |
    | fără sursă — pomii vechi | 8 | — |
-   | fără sursă — `mar-din-samanta`, `nectarin-necunoscut` | 2 | — |
+   | fără sursă — `nectarin-necunoscut` (nefolosit), `smochin-bucureasa` (nume dat de noi) | 2 | — |
 
    Paginile Yurta dau uneori **403** la citire automată; atunci ia datele din mai multe
    pepiniere românești care spun același lucru și treci asta ca sursă. Verifică specia înainte
