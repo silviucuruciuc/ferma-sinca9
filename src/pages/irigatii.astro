@@ -1,0 +1,295 @@
+---
+import Baza from '../layouts/Baza.astro';
+import PlanSvg from '../components/PlanSvg.astro';
+import { incarca, numar } from '../lib/date.js';
+
+const { pomi, teren, irigatii } = await incarca();
+const dupaId = new Map(pomi.map((p) => [p.id, p]));
+const m = (v: number) => `${numar(Math.round(v))} m`;
+const total = irigatii
+  ? {
+      pomi: irigatii.zone.reduce((s: number, z: any) => s + z.n, 0),
+      pe: irigatii.zone.reduce((s: number, z: any) => s + z.lungimePE, 0),
+      picurare: irigatii.zone.reduce((s: number, z: any) => s + z.lungimePicurare, 0),
+      debitMax: Math.max(...irigatii.zone.map((z: any) => z.debit_lh)),
+      traversare: irigatii.zone.flatMap((z: any) => z.traversari).reduce((s: number, t: any) => Math.max(s, t.lungime), 0),
+    }
+  : null;
+---
+
+<Baza titlu="Irigații" descriere="Schița sistemului de irigații prin picurare, cu ESP32 și senzori de umiditate.">
+  <main class="pagina">
+    <h1>Irigații prin picurare — schiță</h1>
+    <p class="subtitlu">
+      Propunere, nu instalație: nimic de aici nu e încă pe teren. Udă doar pomii tineri plantați; cei vechi au rădăcini
+      adânci și se descurcă singuri. Pomii comandați intră într-o zonă când se plantează — se adaugă id-ul lor în{' '}
+      <code>src/data/irigatii.yaml</code>.
+    </p>
+
+    {
+      !irigatii ? (
+        <p class="gol">Nu există <code>src/data/irigatii.yaml</code>.</p>
+      ) : (
+        <>
+          <div class="harta-schita">
+            <PlanSvg teren={teren} pomi={pomi} irigatii={irigatii} cuIrigatii eticheta="Schița irigațiilor pe planul terenului" />
+          </div>
+          <p class="legenda">
+            <span><b class="m-cutie">C</b> cutia de comandă, lângă căminul de apă</span>
+            <span><b class="m-teava" /> țeavă PE pe zonă</span>
+            <span><b class="m-inel" /> inel de picurare</span>
+            <span><b class="m-senzor" /> senzor de umiditate</span>
+            <span><b class="m-acces" /> acces de la poartă</span>
+            <span><b class="m-trav" /> traversare îngropată</span>
+          </p>
+
+          {irigatii.avertismente.length > 0 && (
+            <div class="avertismente">
+              <h2>De verificat în schiță</h2>
+              <ul>{irigatii.avertismente.map((a: string) => <li>{a}</li>)}</ul>
+            </div>
+          )}
+
+          <h2>Zone</h2>
+          <p>
+            O zonă = o electrovalvă. Se udă o singură zonă odată: debitul e mic ({numar(total!.debitMax)} l/h cel mult),
+            dar așa presiunea rămâne aceeași la toți picurătorii și debitmetrul arată exact ce consumă zona.
+          </p>
+          <div class="tabel">
+            <table>
+              <thead>
+                <tr><th>Zonă</th><th>Pomi</th><th>Senzor la</th><th class="num">Debit</th><th class="num">PE 25/16</th><th class="num">Tub picurare</th></tr>
+              </thead>
+              <tbody>
+                {irigatii.zone.map((z: any) => (
+                  <tr>
+                    <td><span class="cod" style={`--z:${z.culoare}`}>{z.cod}</span> {z.nume}</td>
+                    <td>
+                      {z.inele.map((i: any, k: number) => (
+                        <>{k > 0 && ', '}<a href={dupaId.get(i.pom)?.url}>{i.eticheta}</a></>
+                      ))}
+                    </td>
+                    <td>{z.senzor?.eticheta ?? '—'}</td>
+                    <td class="num">{numar(z.debit_lh)} l/h</td>
+                    <td class="num">{m(z.lungimePE)}</td>
+                    <td class="num">{m(z.lungimePicurare)}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr><td>Total</td><td>{total!.pomi} pomi</td><td /><td /><td class="num">{m(total!.pe)}</td><td class="num">{m(total!.picurare)}</td></tr>
+              </tfoot>
+            </table>
+          </div>
+          <p class="mic">
+            Pe pom: {irigatii.picurare.picuratori_pe_pom} picurători cu presiune compensată × {irigatii.picurare.debit_lh} l/h, pe un
+            inel cu raza de {numar(irigatii.picurare.inel_m)} m. Lungimile sunt pe plan, fără rezervă — la cumpărare, +15%.
+            Z2 și Z3 merg în aceeași tranșee de-a lungul gardului de la stradă.
+          </p>
+
+          <h2>Accesul de la poartă</h2>
+          <p>
+            Culoarul auto și pietonal pleacă din poartă perpendicular pe gard, cât poarta de lat, și rămâne liber la
+            suprafață: nicio țeavă și niciun racord nu trece prin el. Tranșeea comună Z2 + Z3 îl traversează o singură
+            dată, pe {numar(Math.round(total!.traversare * 10) / 10)} m, lângă gard — {irigatii.acces?.tub ?? 'în tub de protecție'}.
+            Adâncimea culoarului (15 m) e presupusă; se schimbă în <code>irigatii.yaml</code>.
+          </p>
+
+          <h2>Piese</h2>
+          <div class="coloane">
+            <section>
+              <h3>La căminul „Apă Rețea”</h3>
+              <ul>
+                <li>Robinet sferic de izolare</li>
+                <li>Clapet antiretur — apa din instalație nu se întoarce în rețea</li>
+                <li>Reductor de presiune, reglat la 1,5–2 bar</li>
+                <li>Filtru cu discuri, 120 mesh — picurătorii se înfundă ușor</li>
+                <li>Debitmetru cu impulsuri — vede scurgerile și valvele blocate</li>
+              </ul>
+            </section>
+            <section>
+              <h3>În cutia de comandă (IP65)</h3>
+              <ul>
+                <li>ESP32 (Wi-Fi)</li>
+                <li>3 electrovalve ¾″ normal închise, câte una pe zonă, pe un distribuitor</li>
+                <li>Driver pentru valve (relee sau MOSFET, după tipul valvelor)</li>
+                <li>Transceiver RS485 pentru senzori</li>
+                <li>Alimentare — <em>nehotărâtă</em>, vezi mai jos</li>
+              </ul>
+            </section>
+            <section>
+              <h3>În teren</h3>
+              <ul>
+                <li>Țeavă PE 25 mm pe trasee, PE 16 mm la racorduri</li>
+                <li>Tub de picurare 16 mm cu picurători compensați, pe inele</li>
+                <li>
+                  3 senzori de umiditate a solului RS485 (Modbus), la 25–30 cm, în bulbul de umezeală al unui pom
+                  reprezentativ din zonă
+                </li>
+                <li>Cablu 4 fire în aceleași tranșee, de la cutie la senzori</li>
+              </ul>
+            </section>
+          </div>
+          <p class="mic">
+            Senzori RS485 cu fir, nu wireless: merg zeci de metri pe același cablu, n-au baterii de schimbat, iar tranșeea
+            se sapă oricum. Varianta fără fir (ESP32 cu baterie la fiecare senzor) rămâne dacă sapi doar pentru țeavă.
+          </p>
+
+          <h2>Cum decide</h2>
+          <ol>
+            <li>La fiecare 15 minute citește umiditatea în fiecare zonă.</li>
+            <li>
+              O zonă se udă când umiditatea scade sub pragul ei, doar în fereastra de dimineață și cu o durată maximă pe zi —
+              dacă senzorul se strică, nu udă la nesfârșit.
+            </li>
+            <li>Nu udă după ploaie: pragul ține cont de ce arată senzorul, nu de calendar.</li>
+            <li>
+              Debitmetrul verifică: apă cu toate valvele închise înseamnă scurgere (închide totul și alertează), iar
+              valva deschisă fără debit înseamnă apă oprită sau filtru înfundat.
+            </li>
+            <li>Programul e salvat în ESP32: fără internet merge mai departe cu ultimul primit.</li>
+          </ol>
+
+          <h2>Legătura cu site-ul</h2>
+          <p>
+            ESP32 pornește toate conexiunile, deci la fermă nu trebuie deschis nimic spre internet. Totul trece prin
+            worker-ul care servește deja site-ul:
+          </p>
+          <div class="tabel">
+            <table>
+              <thead><tr><th>Cerere</th><th>Ce face</th></tr></thead>
+              <tbody>
+                <tr><td><code>POST /api/irigatii/citiri</code></td><td>ESP32 trimite umiditatea pe zone, debitul și starea valvelor. Autentificat cu un token al dispozitivului, păstrat ca secret în worker.</td></tr>
+                <tr><td><code>GET /api/irigatii/program</code></td><td>ESP32 ia pragurile, ferestrele și duratele maxime pe zone.</td></tr>
+                <tr><td><code>GET /api/irigatii/stare</code></td><td>Pagina asta afișează ultimele citiri și udările din ultimele zile.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            Citirile se păstrează în Cloudflare D1 (în contul personal, ca site-ul). Fiecare udare poate intra automat în
+            jurnal ca intervenție de tip „Irigare”, pe pomii zonei — tipul există deja. Nimic din partea asta nu e încă
+            scris; e forma propusă.
+          </p>
+
+          <h2>Rămas de hotărât</h2>
+          <ul>
+            <li>
+              <b>Alimentarea cutiei.</b> 230 V din rulotă (cablu în tranșee, ~20 m) sau panou solar de 20–30 W cu baterie de
+              12 V. Cu solar, valvele trebuie să fie bistabile (latch), care consumă doar la comutare.
+            </li>
+            <li><b>Presiunea din rețea</b>, de măsurat la robinet — de ea depinde reductorul.</li>
+            <li><b>Semnalul Wi-Fi</b> la colțul de nord; dacă nu ajunge, ESP32 cu modem 4G.</li>
+            <li><b>Cât de adânc intră accesul</b> — schița presupune 15 m.</li>
+          </ul>
+        </>
+      )
+    }
+  </main>
+</Baza>
+
+<style>
+  .harta-schita {
+    height: min(70vh, 40rem);
+    border: 1px solid var(--linie);
+    border-radius: var(--r);
+    overflow: hidden;
+    margin: 1rem 0 0.5rem;
+  }
+  .legenda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.1rem;
+    color: var(--grafit);
+    font-size: 0.9rem;
+  }
+  .legenda b {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 0.3rem;
+  }
+  .m-cutie {
+    width: 1.1rem;
+    height: 1.1rem;
+    border-radius: 3px;
+    background: var(--cerneala);
+    color: var(--alb);
+    font-size: 0.7rem;
+    text-align: center;
+    line-height: 1.1rem;
+  }
+  .m-teava {
+    width: 1.4rem;
+    height: 3px;
+    background: #2e6fa8;
+  }
+  .m-inel {
+    width: 0.9rem;
+    height: 0.9rem;
+    border: 1.5px dashed #2e6fa8;
+    border-radius: 50%;
+  }
+  .m-senzor {
+    width: 0.65rem;
+    height: 0.65rem;
+    border: 2px solid #2e6fa8;
+    background: var(--alb);
+    transform: rotate(45deg);
+  }
+  .m-acces {
+    width: 1.2rem;
+    height: 0.8rem;
+    border: 1px dashed var(--grafit);
+    background: rgb(28 42 38 / 0.06);
+  }
+  .m-trav {
+    width: 1.4rem;
+    height: 7px;
+    background: rgb(28 42 38 / 0.25);
+  }
+  .avertismente {
+    border: 1.5px dashed var(--linie);
+    border-radius: var(--r);
+    padding: 0.5rem 1rem;
+    margin: 1rem 0;
+    background: var(--alb);
+  }
+  .avertismente h2 {
+    margin-top: 0.5rem;
+    font-size: 1rem;
+  }
+  .tabel {
+    overflow-x: auto;
+  }
+  .num {
+    text-align: right;
+    white-space: nowrap;
+  }
+  tfoot td {
+    font-weight: 650;
+  }
+  .cod {
+    display: inline-block;
+    min-width: 2rem;
+    padding: 0 0.3rem;
+    border-radius: 3px;
+    background: var(--z);
+    color: #fff;
+    font-weight: 700;
+    text-align: center;
+  }
+  .coloane {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+    gap: 0 1.5rem;
+  }
+  .coloane h3 {
+    font-size: 1rem;
+  }
+  .mic {
+    color: var(--grafit);
+    font-size: 0.9rem;
+  }
+  h2 {
+    margin-top: 2rem;
+  }
+</style>

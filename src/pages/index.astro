@@ -4,7 +4,7 @@ import PlanSvg from '../components/PlanSvg.astro';
 import { incarca, GITHUB, repoConfigurat, linkCMS, dataScurta } from '../lib/date.js';
 import { SPECII, GRUPE } from '../lib/specii.js';
 
-const { pomi, teren } = await incarca();
+const { pomi, teren, irigatii } = await incarca();
 
 const activi = pomi.filter((p) => !p.stareInfo.istoric);
 const pePlan = activi.filter((p) => p.pozitie).length;
@@ -61,7 +61,7 @@ const json = JSON.stringify(dateClient).replace(/</g, '\\u003c');
 <Baza titlu="Plan" sectiune="plan" plin>
   <main class="harta">
     <div class="harta-plan" id="harta-plan">
-      <PlanSvg id="plan" teren={teren} pomi={pomi} eticheta="Planul terenului. Nordul e sus, strada e pe latura de vest." />
+      <PlanSvg id="plan" teren={teren} pomi={pomi} irigatii={irigatii} eticheta="Planul terenului. Nordul e sus, strada e pe latura de vest." />
 
       <div class="plan-nord" aria-hidden="true">
         <svg viewBox="0 0 24 34" width="22" height="31"><path d="M12 2 20 26 12 21 4 26Z" fill="#1c2a26" /><text x="12" y="34" text-anchor="middle">N</text></svg>
@@ -151,6 +151,13 @@ const json = JSON.stringify(dateClient).replace(/</g, '\\u003c');
         <div class="comutatoare">
           <label class="comutator"><input type="checkbox" id="arata-coroane" checked /> Coroana la maturitate (cerc punctat)</label>
           <label class="comutator"><input type="checkbox" id="arata-istoric" /> Arată pomii uscați / scoși</label>
+          {
+            irigatii && (
+              <label class="comutator">
+                <input type="checkbox" id="arata-irigatii" /> Irigații prin picurare (schiță) · <a href="/irigatii/">detalii</a>
+              </label>
+            )
+          }
         </div>
         <p class="nota-legenda">
           <span class="mostra plin"></span> plantat <span class="mostra gol"></span> comandat (poziție planificată)

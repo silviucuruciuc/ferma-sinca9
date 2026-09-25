@@ -1,0 +1,77 @@
+# Irigații prin picurare — SCHIȚĂ, nu proiect de execuție.
+#
+# Coordonate locale, în metri, ca în pozitii.json: x spre EST, y spre NORD.
+# Traseele sunt calculate din garduri (offset constant spre interior), nu desenate de mână:
+#   - Z1 merge de-a lungul gardului nordic (209-210), la 1.2 m de el — trece între rulotă
+#     și gard, unde sunt 2 m liberi.
+#   - Z2 și Z3 coboară în aceeași tranșee de-a lungul gardului de la stradă, la 1.5 și
+#     1.8 m de el, și traversează accesul de la poartă o singură dată, îngropat în tub.
+#   - Racordurile la pomi (laterale) și inelele de picurare NU sunt aici: se calculează din
+#     poziția pomului (src/lib/irigatii.js), deci urmează pomul dacă e mutat pe plan.
+#
+# Doar pomii tineri, plantați. Cei vechi (meri, peri, pruni bătrâni) nu se udă: au rădăcini
+# adânci și se descurcă singuri.
+
+# Accesul de la poartă: culoar perpendicular pe gard, cât poarta de lat. Adâncimea e o
+# presupunere — pe axa porții nu e niciun pom mai aproape de 2.4 m lateral până la 30 m.
+acces:
+  nume: Acces auto și pietonal
+  adancime_m: 15
+  tub_protectie: PVC Ø50 la 50 cm adâncime, pe toată lățimea culoarului
+
+# Căminul de la „Apă Rețea” și cutia de comandă de lângă el.
+cutie:
+  x: 15.87
+  y: 47.94
+  nume: Cutie de comandă (IP65)
+
+picurare:
+  picuratori_pe_pom: 4     # picurători cu presiune compensată, pe inel
+  debit_lh: 4              # l/h pe picurător
+  inel_m: 0.5              # raza inelului în jurul trunchiului (pomi tineri)
+
+zone:
+  - cod: Z1
+    nume: Nord
+    culoare: '#2E6FA8'
+    pomi: [cires-01, cires-03, magnolie-01, smochin-02, cires-02]
+    senzor: cires-03
+    trasee:
+      - |
+        15.87 47.94
+        16.16 48.70
+        47.50 41.72
+
+  - cod: Z2
+    nume: Centru
+    culoare: '#6A5BB0'
+    pomi: [cais-04, cais-05, nectarin-01, visin-03, nectarin-02, piersic-01]
+    senzor: cais-04
+    trasee:
+      # Trunchiul, de-a lungul gardului de la stradă, la 1.5 m.
+      - |
+        15.87 47.94
+        14.71 47.45
+        8.85 32.36
+        7.71 29.44
+        4.10 20.00
+      # Ramura spre interior, paralelă cu accesul, la 1 m de marginea lui sudică.
+      - |
+        9.73 34.62
+        24.17 29.00
+
+  - cod: Z3
+    nume: Sud
+    culoare: '#1F8A8A'
+    pomi: [cires-04, cais-03, par-02, par-01, cires-05, visin-01, visin-02]
+    senzor: par-02
+    trasee:
+      # Aceeași tranșee cu Z2 până jos, la 1.8 m de gard, apoi spre est.
+      - |
+        15.87 47.94
+        14.99 47.34
+        9.13 32.25
+        7.99 29.33
+        3.58 17.22
+        3.07 15.50
+        21.00 15.80

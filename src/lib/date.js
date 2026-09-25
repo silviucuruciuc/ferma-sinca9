@@ -5,6 +5,7 @@ import * as yaml from 'js-yaml';
 import config from '../../ferma.config.json';
 import { SPECII, GRUPE, specie, stare, tip, etichetaPom, normalizeaza, COROANA_DUPA_PORTALTOI } from './specii.js';
 import { normalizeazaTeren } from './teren.js';
+import { construiesteIrigatii } from './irigatii.js';
 
 export const SITE = config.site;
 export const GITHUB = config.github;
@@ -126,7 +127,9 @@ async function construieste() {
     .sort(comparaPomi);
 
   const pomById = new Map(pomi.map((p) => [p.id, p]));
-  return { pomi, pomById, soiuri, portaltoiuri, jurnal, teren, pozitii };
+  const irigatii = construiesteIrigatii(citeste('src/data/irigatii.yaml', (t) => yaml.load(t)), teren, pomi);
+
+  return { pomi, pomById, soiuri, portaltoiuri, jurnal, teren, pozitii, irigatii };
 }
 
 // Ordinea speciilor = ordinea din SPECII; în cadrul speciei, după număr.

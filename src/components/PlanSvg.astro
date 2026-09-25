@@ -8,9 +8,12 @@ interface Props {
   evidentiat?: string;
   id?: string;
   eticheta?: string;
+  irigatii?: any;
+  /** Stratul de irigații vizibil de la început (pe pagina /irigatii/). */
+  cuIrigatii?: boolean;
 }
 
-const { teren, pomi, mini = false, evidentiat, id, eticheta = 'Planul terenului' } = Astro.props;
+const { teren, pomi, mini = false, evidentiat, id, eticheta = 'Planul terenului', irigatii, cuIrigatii = false } = Astro.props;
 const { minX, maxX, minY, maxY } = teren.limite;
 const M = mini ? 2 : 6;
 const W = maxX - minX;
@@ -35,7 +38,7 @@ const pePlan = pomi.filter((p) => p.pozitie);
 
 <svg
   id={id}
-  class:list={['plan', { 'plan-mini': mini }]}
+  class:list={['plan', { 'plan-mini': mini, 'cu-irigatii': cuIrigatii }]}
   viewBox={`${minX - M} ${-M} ${W + 2 * M} ${H + 2 * M}`}
   preserveAspectRatio="xMidYMid meet"
   role={mini ? 'img' : 'application'}
@@ -115,6 +118,51 @@ const pePlan = pomi.filter((p) => p.pozitie);
       ))
     }
   </g>
+
+  {
+    !mini && irigatii && (
+      <g class="strat-irigatii" aria-hidden="true">
+        {irigatii.acces && <polygon class="irig-acces" points={pts(irigatii.acces.puncte)} />}
+        {irigatii.zone.map((z: any) => (
+          <g class="irig-zona" style={`--z:${z.culoare}`}>
+            {z.trasee.map((t: number[][]) => <polyline class="irig-teava" points={pts(t)} />)}
+            {z.laterale.map((l: any) => <line class="irig-racord" x1={l.de[0]} y1={sy(l.de[1])} x2={l.la[0]} y2={sy(l.la[1])} />)}
+            {z.inele.map((i: any) => <circle class="irig-inel" cx={i.x} cy={sy(i.y)} r={i.r} />)}
+          </g>
+        ))}
+        {irigatii.zone.flatMap((z: any) =>
+          z.traversari.map((t: any) => <line class="irig-traversare" x1={t.de[0]} y1={sy(t.de[1])} x2={t.la[0]} y2={sy(t.la[1])} />),
+        )}
+        {irigatii.zone.filter((z: any) => z.senzor).map((z: any) => (
+          <g transform={`translate(${z.senzor.x} ${sy(z.senzor.y)})`} style={`--z:${z.culoare}`}>
+            <g class="s" transform={scala}>
+              <line class="irig-senzor-fir" x1="0" y1="0" x2={(z.senzor.ux * 16).toFixed(1)} y2={(-z.senzor.uy * 16).toFixed(1)} />
+              <path class="irig-senzor" transform={`translate(${(z.senzor.ux * 16).toFixed(1)} ${(-z.senzor.uy * 16).toFixed(1)})`} d="M0 -6L6 0L0 6L-6 0Z" />
+            </g>
+          </g>
+        ))}
+        {irigatii.zone.map((z: any) => {
+          const t = z.trasee.at(-1);
+          const [x, y] = t.at(-1);
+          return (
+            <g transform={`translate(${x} ${sy(y)})`} style={`--z:${z.culoare}`}>
+              <g class="s" transform={scala}>
+                <text class="irig-cod" x="6" y="-6">{z.cod}</text>
+              </g>
+            </g>
+          );
+        })}
+        {irigatii.cutie && (
+          <g transform={`translate(${irigatii.cutie.x} ${sy(irigatii.cutie.y)})`}>
+            <g class="s" transform={scala}>
+              <rect class="irig-cutie" x="-7" y="-7" width="14" height="14" rx="2" />
+              <text class="irig-cutie-text" y="3.5" text-anchor="middle">C</text>
+            </g>
+          </g>
+        )}
+      </g>
+    )
+  }
 
   <g class="strat-coroane" aria-hidden="true">
     {
@@ -326,6 +374,71 @@ const pePlan = pomi.filter((p) => p.pozitie);
 
   .plan .coroana-palisata {
     rx: 0.15;
+  }
+
+  /* Irigații (schiță) — ascunse până se bifează stratul. Nuanțe reci, departe de culorile de status. */
+  .plan .strat-irigatii {
+    display: none;
+    pointer-events: none;
+  }
+  .plan.cu-irigatii .strat-irigatii {
+    display: inline;
+  }
+  .plan .irig-acces {
+    fill: rgb(28 42 38 / 0.06);
+    stroke: var(--grafit);
+    stroke-width: 1;
+    stroke-dasharray: 6 4;
+    vector-effect: non-scaling-stroke;
+  }
+  .plan .irig-teava {
+    fill: none;
+    stroke: var(--z);
+    stroke-width: 2.5;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+  }
+  .plan .irig-racord {
+    stroke: var(--z);
+    stroke-width: 1.25;
+    vector-effect: non-scaling-stroke;
+  }
+  .plan .irig-inel {
+    fill: none;
+    stroke: var(--z);
+    stroke-width: 1.5;
+    stroke-dasharray: 2 2;
+    vector-effect: non-scaling-stroke;
+  }
+  .plan .irig-traversare {
+    stroke: var(--cerneala);
+    stroke-width: 7;
+    stroke-opacity: 0.25;
+    stroke-linecap: butt;
+    vector-effect: non-scaling-stroke;
+  }
+  .plan .irig-senzor {
+    fill: var(--alb);
+    stroke: var(--z);
+    stroke-width: 2;
+  }
+  .plan .irig-senzor-fir {
+    stroke: var(--z);
+    stroke-width: 1.5;
+  }
+  .plan .irig-cod {
+    fill: var(--z);
+    font-size: 11px;
+    font-weight: 700;
+  }
+  .plan .irig-cutie {
+    fill: var(--cerneala);
+  }
+  .plan .irig-cutie-text {
+    fill: var(--alb);
+    font-size: 10px;
+    font-weight: 700;
   }
 
   .plan .coroana {

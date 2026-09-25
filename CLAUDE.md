@@ -106,6 +106,21 @@ deschide o mapare. Pune ghilimele.
 De aici vin cele ~9 avertismente de suprapunere din plan. Toate implică cel puțin un pom
 vechi. Nu sunt o problemă de așezare — dispar când se măsoară pe teren.
 
+## Irigații — schiță, într-un singur commit revertabil
+
+`src/data/irigatii.yaml` + `src/lib/irigatii.js` + `src/pages/irigatii.astro`, plus stratul
+„Irigații” din plan (bifă, ascuns implicit). Totul a intrat într-un singur commit tocmai ca
+să poată fi scos cu `git revert` — nu amesteca alte schimbări în fișierele lui fără motiv.
+Poziția porții a fost corectată **separat**, înainte, ca revertul să n-o mute înapoi.
+
+- Traseele sunt în metri locali (ca `pozitii.json`), calculate ca offset de la garduri.
+  Racordurile, inelele și culoarul de acces se calculează — urmează pomii și poarta.
+- Doar pomii tineri plantați; cei vechi nu se udă (decizia lui Silviu). Un pom nou plantat
+  intră în udare adăugându-i id-ul la o zonă.
+- Accesul de la poartă trebuie să rămână liber la suprafață; `irigatii.js` avertizează
+  dacă un racord îl traversează. Adâncimea lui (15 m) e presupusă.
+- Partea cu ESP32 ↔ site (`/api/irigatii/*` în worker, D1) e doar descrisă pe pagină, nu scrisă.
+
 ## Obiceiuri de verificare care au prins erori reale
 
 Nu sări peste astea, fiecare a prins ceva în sesiunea trecută:

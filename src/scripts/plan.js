@@ -491,6 +491,7 @@ function porneste(DATE) {
   });
 
   $('#arata-coroane').addEventListener('change', (e) => svg.classList.toggle('fara-coroane', !e.target.checked));
+  $('#arata-irigatii')?.addEventListener('change', (e) => svg.classList.toggle('cu-irigatii', e.target.checked));
   $('#arata-istoric').addEventListener('change', (e) => {
     arataIstoric = e.target.checked;
     randeazaTava();
