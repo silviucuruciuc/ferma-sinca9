@@ -32,7 +32,14 @@ const { owner, repo } = config.github;
         <form id="formular" class="formular">
           <label for="text" class="ascuns">Mesaj</label>
           <textarea id="text" rows="3" placeholder="Ce vrei să schimb?" required></textarea>
-          <button type="submit" class="buton galben" id="trimite">Trimite</button>
+          <div class="trimitere">
+            <label for="model" class="ascuns">Model</label>
+            <select id="model" title="Modelul care face modificarea">
+              <option value="opus">Opus 5.5</option>
+              <option value="sonnet">Sonnet 5</option>
+            </select>
+            <button type="submit" class="buton galben" id="trimite">Trimite</button>
+          </div>
         </form>
         <p class="nota">Enter trimite, Shift+Enter rând nou.</p>
       </section>
@@ -49,6 +56,17 @@ const { owner, repo } = config.github;
   const peGithub = $<HTMLAnchorElement>('#pe-github');
   const text = $<HTMLTextAreaElement>('#text');
   const trimite = $<HTMLButtonElement>('#trimite');
+  const model = $<HTMLSelectElement>('#model');
+  // Ultimul model ales, doar ca o comoditate locală.
+  try {
+    const m = localStorage.getItem('asistent.model');
+    if (m && [...model.options].some((o) => o.value === m)) model.value = m;
+  } catch {}
+  model.addEventListener('change', () => {
+    try {
+      localStorage.setItem('asistent.model', model.value);
+    } catch {}
+  });
   let curenta: number | null = null;
   let ceas: number | undefined;
 
@@ -120,7 +138,7 @@ const { owner, repo } = config.github;
       for (const m of c.mesaje) {
         const d = document.createElement('article');
         d.className = `mesaj ${m.autor}`;
-        d.innerHTML = `<p class="cine">${m.autor === 'eu' ? 'Tu' : 'Asistent'} · ${data.format(new Date(m.data))}</p><div class="corp">${formateaza(m.text)}</div>`;
+        d.innerHTML = `<p class="cine">${m.autor === 'eu' ? 'Tu' : 'Asistent'} · ${data.format(new Date(m.data))}${m.model ? ` · ${m.model}` : ''}</p><div class="corp">${formateaza(m.text)}</div>`;
         mesaje.append(d);
       }
       mesaje.scrollTop = mesaje.scrollHeight;
@@ -143,7 +161,7 @@ const { owner, repo } = config.github;
         const { nr } = await api('conversatii', { method: 'POST', body: JSON.stringify({ text: t }) });
         curenta = nr;
       } else {
-        await api(`conversatii/${curenta}`, { method: 'POST', body: JSON.stringify({ text: t }) });
+        await api(`conversatii/${curenta}`, { method: 'POST', body: JSON.stringify({ text: t, model: model.value }) });
       }
       text.value = '';
       await deschide(curenta);
@@ -267,6 +285,19 @@ const { owner, repo } = config.github;
     font: inherit;
     background: var(--alb);
     resize: vertical;
+  }
+  .trimitere {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+  .trimitere select {
+    padding: 0.35rem 0.4rem;
+    border: 1.5px solid var(--linie);
+    border-radius: var(--r);
+    background: var(--alb);
+    font: inherit;
+    font-size: 0.85rem;
   }
   .nota {
     font-size: 0.8rem;

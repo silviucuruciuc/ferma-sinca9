@@ -14,6 +14,16 @@ const { owner, repo } = config.github;
 const ETICHETA = 'asistent';
 const GH = `https://api.github.com/repos/${owner}/${repo}`;
 
+// Modelul ales în chat călătorește în mesaj ca un comentariu HTML (invizibil pe GitHub);
+// asistent.yml îl citește din mesajul care a pornit rularea. Doar cheile de aici sunt acceptate.
+export const MODELE = { opus: 'Opus 5.5', sonnet: 'Sonnet 5' };
+const MARCAJ = /\n*<!-- model: ([a-z]+) -->\s*$/;
+const cuModel = (t, model) => `${t}\n\n<!-- model: ${model} -->`;
+const faraModel = (t) => {
+  const m = String(t ?? '').match(MARCAJ);
+  return { text: String(t ?? '').replace(MARCAJ, ''), model: m && MODELE[m[1]] ? MODELE[m[1]] : null };
+};
+
 export async function asistent(request, url, env) {
   const eroare = await verificaAcces(request, env);
   if (eroare) return json({ eroare: eroare.mesaj }, eroare.cod);
@@ -74,8 +84,8 @@ async function conversatie(nr, env) {
   ]);
   if (!i.labels?.some((l) => l.name === ETICHETA)) throw Object.assign(new Error('Nu e o conversație.'), { cod: 404 });
   const mesaje = [
-    { autor: 'eu', text: i.body ?? '', data: i.created_at },
-    ...comentarii.map((c) => ({ autor: eAsistent(c.user) ? 'asistent' : 'eu', text: c.body ?? '', data: c.updated_at })),
+    { autor: 'eu', ...faraModel(i.body), data: i.created_at },
+    ...comentarii.map((c) => ({ autor: eAsistent(c.user) ? 'asistent' : 'eu', ...faraModel(c.body), data: c.updated_at })),
   ];
   const activa = rulari.workflow_runs?.some((r) => r.status !== 'completed' && r.display_title === i.title);
   return {
@@ -89,15 +99,15 @@ async function conversatie(nr, env) {
   };
 }
 
-async function conversatieNoua(t, env) {
+async function conversatieNoua({ text: t, model }, env) {
   await gh(env, '/labels', { method: 'POST', body: JSON.stringify({ name: ETICHETA, color: '2c5a4d' }) }).catch(() => {});
   const titlu = t.split('\n')[0].replace(/\s+/g, ' ').trim().slice(0, 70) || 'Cerere';
-  const i = await gh(env, '/issues', { method: 'POST', body: JSON.stringify({ title: titlu, body: t, labels: [ETICHETA] }) });
+  const i = await gh(env, '/issues', { method: 'POST', body: JSON.stringify({ title: titlu, body: cuModel(t, model), labels: [ETICHETA] }) });
   return { nr: i.number };
 }
 
-async function mesaj(nr, t, env) {
-  await gh(env, `/issues/${nr}/comments`, { method: 'POST', body: JSON.stringify({ body: t }) });
+async function mesaj(nr, { text: t, model }, env) {
+  await gh(env, `/issues/${nr}/comments`, { method: 'POST', body: JSON.stringify({ body: cuModel(t, model) }) });
   return { ok: true };
 }
 
@@ -106,7 +116,9 @@ async function text(request) {
   const t = String(corp.text ?? '').trim();
   if (!t) throw Object.assign(new Error('Mesajul e gol.'), { cod: 400 });
   if (t.length > 8000) throw Object.assign(new Error('Mesajul e prea lung.'), { cod: 400 });
-  return t;
+  const model = corp.model ?? 'opus';
+  if (!MODELE[model]) throw Object.assign(new Error('Model necunoscut.'), { cod: 400 });
+  return { text: t, model };
 }
 
 // ---------------------------------------------------------------- Cloudflare Access

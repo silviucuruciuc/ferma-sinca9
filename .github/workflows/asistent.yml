@@ -50,15 +50,31 @@ jobs:
         run: |
           mkdir -p .asistent
           gh issue view "$NR" --json title,body,comments --jq '
-            "# " + .title + "\n\n## Silviu\n\n" + .body + "\n\n" +
-            ([.comments[] | "## " + (if .author.login == "github-actions" then "Asistent" else "Silviu" end) + "\n\n" + .body] | join("\n\n"))
+            def curat: gsub("\\s*<!-- model: [a-z]+ -->\\s*$"; "");
+            "# " + .title + "\n\n## Silviu\n\n" + (.body | curat) + "\n\n" +
+            ([.comments[] | "## " + (if .author.login == "github-actions" then "Asistent" else "Silviu" end) + "\n\n" + (.body | curat)] | join("\n\n"))
           ' > .asistent/conversatie.md
+
+      # Modelul ales în chat e un comentariu HTML la finalul mesajului care a pornit rularea.
+      # Doar valorile din listă; orice altceva (sau lipsa lui) înseamnă Opus.
+      - name: Modelul
+        id: model
+        env:
+          MESAJ: ${{ github.event.comment.body || github.event.issue.body }}
+        run: |
+          case "$MESAJ" in
+            *'<!-- model: sonnet -->'*) m=claude-sonnet-5 ;;
+            *) m=claude-opus-5-5 ;;
+          esac
+          echo "Model: $m"
+          echo "id=$m" >> "$GITHUB_OUTPUT"
 
       - uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           claude_args: >-
+            --model ${{ steps.model.outputs.id }}
             --max-turns 80
             --allowedTools "Read,Write,Edit,Glob,Grep,WebSearch,WebFetch,Bash(npm run build),Bash(git status),Bash(git diff:*),Bash(git log:*),Bash(ls:*),Bash(node scripts/garda.mjs)"
           prompt: |
