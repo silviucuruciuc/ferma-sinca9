@@ -139,3 +139,14 @@ zone:
     puncte: |
       465852.400 519126.558
       465856.128 519128.008
+  # Apă rețea 1 x 1 m, în colțul nordic de la stradă (pct. 209), la 0.5 m de gardul de la
+  # stradă (213-209) și de cel nordic (209-210). Colțul are 96.3°, nu 90°, deci pătratul e
+  # aliniat la gardul de la stradă (0.50 m exact); față de gardul nordic 0.50 m e minimul
+  # (0.50-0.61 m), în colțul cel mai apropiat.
+  - nume: Apă Rețea
+    tip: apa
+    puncte: |
+      465871.153 519134.292
+      465870.206 519133.969
+      465869.883 519134.915
+      465870.829 519135.239
