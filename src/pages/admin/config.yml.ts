@@ -120,7 +120,6 @@ const cms = {
         text('utilizare', 'Utilizare'),
         { name: 'polenizare', label: 'Polenizare', widget: 'select', options: optiuni(POLENIZARE), default: 'necunoscut' },
         { name: 'polenizatori', label: 'Polenizatori recomandați', widget: 'list', ...opt, field: { name: 'soi', label: 'Soi', widget: 'string' } },
-        text('rezistenta', 'Rezistență'),
         text('note', 'Note (700 m)'),
         { name: 'rezumat', label: 'Rezumat', widget: 'text', ...opt },
         text('origine', 'Origine', { hint: 'Cine/unde l-a obținut, anul omologării.' }),
